@@ -172,5 +172,112 @@ class MarketCommands(commands.Cog):
         )
         await interaction.response.send_message(embed=embed)
 
+    @app_commands.command(name="buy", description="Buy a fish directly from the market and drive its value up!")
+    @app_commands.choices(tier=[
+        app_commands.Choice(name="Bozo ⚪", value="Bozo ⚪"),
+        app_commands.Choice(name="Common 🔘", value="Common 🔘"),
+        app_commands.Choice(name="Uncommon 🔵", value="Uncommon 🔵"),
+        app_commands.Choice(name="El Bozo 🟢", value="El Bozo 🟢"),
+        app_commands.Choice(name="Your Mother 🟣", value="Your Mother 🟣"),
+        app_commands.Choice(name="Legendary 🟡", value="Legendary 🟡"),
+        app_commands.Choice(name="Rimach 🔴", value="Rimach 🔴"),
+        app_commands.Choice(name="Gay 🌈", value="Gay 🌈"),
+        app_commands.Choice(name="Divine ⚪🟣", value="Divine ⚪🟣"),
+        app_commands.Choice(name="God ✨", value="God ✨")
+    ])
+    async def buy(self, interaction: discord.Interaction, tier: app_commands.Choice[str], quantity: int = 1):
+        await interaction.response.defer()
+        
+        user_id = str(interaction.user.id)
+        username = interaction.user.name
+        chosen_tier = tier.value
+        
+        if quantity <= 0:
+            await interaction.followup.send("❌ You must buy at least 1 fish!")
+            return
+
+        # 1. Get current market price for this tier
+        prices = dict(self.db.get_market_prices())
+        current_unit_price = prices.get(chosen_tier, FISH_DATA[chosen_tier]["value"])
+        total_cost = current_unit_price * quantity
+        
+        # 2. Check player's wallet balance
+        self.db.cursor.execute("SELECT cash FROM players WHERE user_id = ?", (user_id,))
+        player_row = self.db.cursor.fetchone()
+        player_cash = player_row[0] if player_row else 0
+        
+        if player_cash < total_cost:
+            shortfall = total_cost - player_cash
+            await interaction.followup.send(f"💸 You don't have enough cash! You need `${shortfall:,}` more to buy **x{quantity} {chosen_tier}**.")
+            return
+
+        # 3. Calculate market impact (Price RISES by 0.5% of BASE value per fish bought)
+        base_price = FISH_DATA[chosen_tier]["value"]
+        price_bump = int(quantity * (base_price * 0.005))
+        
+        # Cap check: Make sure we don't exceed the absolute max market ceiling (2.5x base)
+        max_allowed_price = int(base_price * 2.5)
+        if current_unit_price + price_bump > max_allowed_price:
+            price_bump = max(0, max_allowed_price - current_unit_price)
+
+        # 4. Pick a random fish species from that tier to award them for each unit
+        # (If they buy multiple, we can just pick one representative species to loop or log)
+        chosen_species = random.choice(FISH_DATA[chosen_tier]["species"])
+
+        # 5. Execute the buy sequence in the DB
+        # If they buy more than 1, we can adjust your inventory loop, 
+        # but for simplicity, this adds 'quantity' to their inventory row:
+        for _ in range(quantity):
+            # Pick a random species for every single fish bought
+            fish_name = random.choice(FISH_DATA[chosen_tier]["species"])
+            # We apply the price bump on the final execution step
+            is_last = (_ == quantity - 1)
+            actual_bump = price_bump if is_last else 0
+            actual_cost = total_cost if is_last else 0
+            
+            # Internal tiny steps or single call adjustments:
+            # To keep database execution super efficient, let's look at doing it directly:
+            pass
+
+        # Cleaner execution method to avoid multiple loops:
+        # Let's execute the single query adjustments cleanly:
+        # 1. Deduct cash from player
+        self.db.cursor.execute("UPDATE players SET cash = cash - ? WHERE user_id = ?", (total_cost, user_id))
+        
+        # 2. Add to inventory
+        for _ in range(quantity):
+            fish_name = random.choice(FISH_DATA[chosen_tier]["species"])
+            self.db.cursor.execute(
+                """
+                INSERT INTO inventory (user_id, fish_tier, quantity) VALUES (?, ?, 1)
+                ON CONFLICT(user_id, fish_tier) DO UPDATE SET quantity = quantity + 1
+                """,
+                (user_id, fish_name)
+            )
+            
+        # 3. Apply market price surge using your EXACT column names!
+        self.db.cursor.execute(
+            "UPDATE market SET current_price = current_price + ? WHERE tier_name = ?", 
+            (price_bump, chosen_tier)
+        )
+        
+        # 4. Commit all the changes at once
+        self.db.conn.commit()
+
+        # 5. Fetch updated price to show them the impact
+        new_prices = dict(self.db.get_market_prices())
+        updated_price = new_prices.get(chosen_tier, current_unit_price)
+
+        # 6. Build transaction receipt
+        embed = discord.Embed(title="🛒 Market Purchase Complete!", color=discord.Color.gold())
+        embed.description = (
+            f"You bought **x{quantity}** fish from the **{chosen_tier}** tier.\n"
+            f"💸 **Total Spent:** `-${total_cost:,}`\n\n"
+            f"📈 **Market Impact:** Your massive order caused the value of {chosen_tier} "
+            f"to skyrocket from **${current_unit_price:,}** up to **${updated_price:,}**!"
+        )
+        
+        await interaction.followup.send(embed=embed)
+
 async def setup(bot):
     await bot.add_cog(MarketCommands(bot))

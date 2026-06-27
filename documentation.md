@@ -81,3 +81,32 @@ During the 5-minute tick, there is a **15% chance** to trigger a Market Shock.
 
 ## 🛡️ Anti-Lag Measures (Deferring)
 To comply with Discord's strict 3-second interaction window, all major commands (`/fish`, `/inventory`, `/sell`, `/market`) immediately invoke `await interaction.response.defer()`. This converts the 3-second timeout into a 15-minute window, allowing database queries and GIF loading to complete without triggering `Error 10062: Unknown interaction` during network spikes.
+
+## 🎣 Karma System: Dynamic Catch Rates
+
+The Karma System introduces personalized, dynamic RNG to the fishing mechanics. Instead of relying on static, global drop rates, a player's catch probabilities scale directly with the amount of fish they have released back into the wild via the `/free` command.
+
+### ❌ The Problem: Static Weights
+Initially, the bot rolled for fish using a hardcoded configuration list (`FISH_WEIGHTS`). This meant the `/fish` command completely ignored the player's saved Karma points in the database, effectively rendering the luck bonus purely cosmetic.
+
+### ✅ The Solution: Dynamic Weights
+The `/fish` command now intercepts the RNG process to calculate a custom set of "dice" for every individual player right before they cast their line. 
+
+Here is the step-by-step breakdown of how the engine handles this:
+
+**1. Profile Fetching**
+When a player initiates the `/fish` command, the bot queries the database (`get_player_karma`) to retrieve their specific accumulated Karma points across all tiers.
+
+**2. Building the Custom Dice**
+The bot iterates through every available fish tier to generate a temporary `dynamic_weights` list. 
+* The core formula grants a **+1% luck bonus to the base weight for every 100 Karma points** in a specific tier.
+* **The Math:** `adjusted_weight = base_weight * (1 + (luck_bonus_pct / 100.0))`
+
+**3. Rolling the Modified Stats**
+The standard `random.choices` function is executed, but the global `FISH_WEIGHTS` list is replaced with the player's personalized `dynamic_weights` list. 
+
+### 📊 Mathematical Example
+If the global base weight for catching a **God ✨** tier fish is normally **1**, and a player has accumulated **100,000 Karma Points** in that tier:
+* The system calculates a **+1000%** luck bonus.
+* It scales the base weight: `1 * (1 + 10.0) = 11`.
+* The player's personal drop weight for that tier becomes **11**, making them exactly 11 times more likely to catch a God tier fish than a brand-new player on the server!

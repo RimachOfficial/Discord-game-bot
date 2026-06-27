@@ -65,6 +65,7 @@ for tier, info in FISH_DATA.items():
         FISH_VALUES[fish] = info["value"]
 
 
+
 class DatabaseManager:
     def __init__(self, db_name="fishing_game.db"):
         self.conn = sqlite3.connect(db_name)
@@ -166,19 +167,62 @@ class DatabaseManager:
         )
         self.conn.commit()
 
-    def sell_fish_db(self, user_id, tier_name, quantity, total_payout):
-        # 1. Remove fish from inventory
+    def sell_fish_db(self, user_id, username, tier_name, quantity, total_payout):
+        # 1. Safely add cash and create profile if missing
         self.cursor.execute(
-            "UPDATE inventory SET quantity = quantity - ? WHERE user_id = ? AND fish_tier = ?",
-            (quantity, user_id, tier_name)
+            """
+            INSERT INTO players (user_id, username, cash)
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET cash = cash + ?
+            """,
+            (user_id, username, total_payout, total_payout),
         )
-        # 2. Add cash to player
+
+        # 2. Safely create inventory row if missing
         self.cursor.execute(
-            "UPDATE players SET cash = cash + ? WHERE user_id = ?",
-            (total_payout, user_id)
+            """
+            INSERT INTO inventory (user_id, fish_tier, quantity)
+            VALUES (?, ?, 0)
+            ON CONFLICT(user_id, fish_tier) DO NOTHING
+            """,
+            (user_id, tier_name),
         )
+
+        # 3. Remove the sold fish
+        self.cursor.execute(
+            """
+            UPDATE inventory
+            SET quantity = quantity - ?
+            WHERE user_id = ? AND fish_tier = ?
+            """,
+            (quantity, user_id, tier_name),
+        )
+
         self.conn.commit()
     
+    def sell_all_fish_db(self, user_id, username, total_payout):
+        # 1. Safely give the player their massive payout
+        self.cursor.execute(
+            """
+            INSERT INTO players (user_id, username, cash)
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET cash = cash + ?
+            """,
+            (user_id, username, total_payout, total_payout),
+        )
+
+        # 2. Wipe their entire inventory back to 0
+        self.cursor.execute(
+            """
+            UPDATE inventory
+            SET quantity = 0
+            WHERE user_id = ?
+            """,
+            (user_id,),
+        )
+
+        self.conn.commit()
+
     def execute_sell(self, user_id, fish_species_list, tier_name, total_payout, price_drop):
         # 1. Add cash to the player (and create player profile if missing)
         self.cursor.execute('''
@@ -243,3 +287,37 @@ class DatabaseManager:
             
         self.conn.commit()
 
+    def execute_buy(self, user_id, username, fish_name, tier_name, total_cost, price_bump):
+        # 1. Deduct cash from the player
+        self.cursor.execute(
+            """
+            UPDATE players 
+            SET cash = cash - ? 
+            WHERE user_id = ?
+            """,
+            (total_cost, user_id)
+        )
+
+        # 2. Add the bought fish to their inventory (UPSERT safe)
+        self.cursor.execute(
+            """
+            INSERT INTO inventory (user_id, fish_tier, quantity)
+            VALUES (?, ?, 1)
+            ON CONFLICT(user_id, fish_tier) DO UPDATE SET quantity = quantity + 1
+            """,
+            (user_id, fish_name) # Note: If your inventory tracks species name, pass fish_name here
+        )
+
+        # 3. Drive the market price UP
+        self.cursor.execute(
+            """
+            UPDATE market 
+            SET price = price + ? 
+            WHERE fish_tier = ?
+            """,
+            (price_bump, tier_name)
+        )
+
+        # Enforce the upper price ceiling (2.5x base price max, mirroring your loop)
+        # We handle this inside the app code right before saving, or let the market loop clip it later.
+        self.conn.commit()
