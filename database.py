@@ -57,6 +57,8 @@ FISH_DATA = {
 # Automatically extract lists for our RNG roller
 FISH_TIERS = list(FISH_DATA.keys())
 FISH_WEIGHTS = [35, 25, 15, 10, 8, 5, 1.5, 0.4, 0.09, 0.01]
+# TEMPORARY FOR TESTING: Inverted weights to test rare fish drops
+#FISH_WEIGHTS = [0.01, 0.09, 0.4, 1.5, 5, 8, 10, 15, 25, 35]
 
 # Automatically build a flat lookup dictionary for inventory.py to check values
 FISH_VALUES = {}
@@ -200,7 +202,7 @@ class DatabaseManager:
 
         self.conn.commit()
     
-    def sell_all_fish_db(self, user_id, username, total_payout):
+    def sell_all_fish_db(self, user_id, username, total_payout, tier_drops, market_prices):
         # 1. Safely give the player their massive payout
         self.cursor.execute(
             """
@@ -221,6 +223,26 @@ class DatabaseManager:
             (user_id,),
         )
 
+        # 3. Crash the live market values for each affected tier
+        for tier, drop_amount in tier_drops.items():
+            if drop_amount > 0:
+                base_price = FISH_DATA[tier]["value"]
+                min_price = int(base_price * 0.4) # Enforce 40% lower floor limit
+                old_price = market_prices.get(tier, base_price)
+                
+                # Determine new price after drop without dipping past floor
+                new_price = max(min_price, old_price - drop_amount)
+                
+                self.cursor.execute(
+                    """
+                    UPDATE market 
+                    SET current_price = ? 
+                    WHERE tier_name = ?
+                    """,
+                    (new_price, tier)
+                )
+
+        # Commit everything as a unified database update
         self.conn.commit()
 
     def execute_sell(self, user_id, fish_species_list, tier_name, total_payout, price_drop):
@@ -321,3 +343,10 @@ class DatabaseManager:
         # Enforce the upper price ceiling (2.5x base price max, mirroring your loop)
         # We handle this inside the app code right before saving, or let the market loop clip it later.
         self.conn.commit()
+
+    def get_player_balance(self, user_id: str) -> int:
+        """Fetches the player's cash balance safely."""
+        self.cursor.execute("SELECT cash FROM players WHERE user_id = ?", (user_id,))
+        row = self.cursor.fetchone()
+        return row[0] if row else 0
+

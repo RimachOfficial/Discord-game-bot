@@ -4,7 +4,7 @@ from discord.ext import commands, tasks
 import random
 from database import FISH_DATA
 
-minutes_of_update=5.0
+minutes_of_update=10.0
 
 class MarketCommands(commands.Cog):
     def __init__(self, bot):
@@ -31,15 +31,24 @@ class MarketCommands(commands.Cog):
 
         # 2. 🚨 Market Shocks (Random News Events)
         # TEMPORARY FOR TESTING: Commenting out the 15% random chance so it triggers 100% of the time
-        # if random.random() < 0.15: 
-        if True:
-            print("🎲 Market loop ticked: Triggering a guaranteed breaking news event...")
+        #if True:
+        if random.random() < 0.15: 
+            print("🎲 Market loop ticked: Triggering a breaking news event...")
             event = random.choice([
+                # --- POSITIVE SPIKES (BULL MARKET) ---
                 {"msg": "⚠️ **ANCHOVY INFLATION!** Low tier fish prices skyrocketed!", "tier": "Bozo ⚪", "mult": 1.8},
                 {"msg": "🐋 **WHALE CONSERVATION ACT!** 'Your Mother' prices doubled!", "tier": "Your Mother 🟣", "mult": 2.0},
-                {"msg": "📉 **CRYPTO CRASH!** Rich players panic-selling God fish!", "tier": "God ✨", "mult": 0.4},
                 {"msg": "🦈 **SHARK WEEK!** Apex predators are in high demand!", "tier": "Rimach 🔴", "mult": 2.2},
-                {"msg": "🦠 **RED TIDE OUTBREAK!** Common fish populations decimated, prices surging!", "tier": "Common 🔘", "mult": 1.6}
+                {"msg": "🦠 **RED TIDE OUTBREAK!** Common populations decimated, prices surging!", "tier": "Common 🔘", "mult": 1.6},
+                {"msg": "👼 **CULT AWAKENING!** Fanatics are hoarding God fish! Prices to the moon!", "tier": "God ✨", "mult": 2.5},
+                {"msg": "💎 **BILLIONAIRE CRAZE!** Divine fish are the new luxury status symbol!", "tier": "Divine ⚪🟣", "mult": 2.1},
+                
+                # --- NEGATIVE CRASHES (BEAR MARKET) ---
+                {"msg": "📉 **CRYPTO CRASH!** Rich players panic-selling God fish!", "tier": "God ✨", "mult": 0.4},
+                {"msg": "🗑️ **GREAT GARBAGE PATCH!** The waters are flooded with trash! Bozo prices tanking!", "tier": "Bozo ⚪", "mult": 0.5},
+                {"msg": "🎣 **OVERFISHING!** The market is flooded with Common fish! Prices plummeting!", "tier": "Common 🔘", "mult": 0.6},
+                {"msg": "🚫 **PIRATE RAID!** Black market fish dumps are crashing the Legendary tier!", "tier": "Legendary 🟡", "mult": 0.5},
+                {"msg": "🧪 **LAB GROWN MEAT!** Fake shark fin soup is crashing the Rimach market!", "tier": "Rimach 🔴", "mult": 0.4}
             ])
             
             updated_prices = dict(self.db.get_market_prices())

@@ -126,6 +126,64 @@ class FishingCommands(commands.Cog):
             # If it's a different error, just print it to the terminal
             print(f"Error: {error}")
 
+
+    @app_commands.command(name="balance", description="View your exact balance in $!")
+    async def view_balance(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+
+        user_id = str(interaction.user.id)
+        
+        # 1. Fetch wallet cash safely (it's a direct integer, no dict needed!)
+        wallet_cash = self.db.get_player_balance(user_id)
+
+        # 2. Fetch inventory and live market prices to calculate asset value
+        user_inv = self.db.get_inventory(user_id)
+        market_prices = dict(self.db.get_market_prices())
+
+        # Reverse lookup map to match specific fish species to their market tier
+        species_to_tier = {}
+        for tier_key, data in FISH_DATA.items():
+            for species in data["species"]:
+                species_to_tier[species] = tier_key
+
+        inventory_value = 0
+        for fish_name, quantity in user_inv:
+            if quantity > 0:
+                tier = species_to_tier.get(fish_name)
+                if tier:
+                    base_price = FISH_DATA[tier]["value"]
+                    current_price = market_prices.get(tier, base_price)
+                    inventory_value += (current_price * quantity)
+
+        # Total net worth
+        total_net_worth = wallet_cash + inventory_value
+
+        # 3. Determine custom rank title based on total net worth
+        if total_net_worth >= 1_000_000:
+            status = "🐋 Market Whale"
+        elif total_net_worth >= 100_000:
+            status = "Business Mogul"
+        elif total_net_worth >= 10_000:
+            status = "Experienced Angler"
+        else:
+            status = "Hobbyist Fisherman"
+
+        # 4. Build the dynamic embed
+        embed = discord.Embed(
+            title="🎲 Live Financial Portfolio",
+            description=f"Showing asset distribution for **{interaction.user.name}**",
+            color=discord.Color.gold()
+        )
+        
+        embed.add_field(name="💵 Liquid Cash", value=f"`${wallet_cash:,}`", inline=True)
+        embed.add_field(name="🪣 Inventory Value", value=f"`${inventory_value:,}`", inline=True)
+        embed.add_field(name="📊 Total Net Worth", value=f"**`${total_net_worth:,}`**", inline=False)
+        
+        embed.set_footer(text=f"Financial Standing: {status}")
+        
+        await interaction.followup.send(embed=embed)
+
+
     @app_commands.command(name="chances", description="View your exact personalized fishing drop rates!")
     async def view_chances(self, interaction: discord.Interaction):
         # 🛡️ Defer the response instantly
@@ -200,23 +258,20 @@ class FishingCommands(commands.Cog):
             await interaction.followup.send("🪣 Your inventory is already empty!")
             return
 
-        # --- THE FIX: Create a mapping to find a fish's tier! ---
+        # Create a mapping to find a fish's tier
         species_to_tier = {}
         for tier_key, data in FISH_DATA.items():
             for species in data["species"]:
                 species_to_tier[species] = tier_key
-        # --------------------------------------------------------
 
         total_payout = 0
         total_fish_sold = 0
+        tier_drops = {} # Tracks total price drop per tier
         
-        # 2. Calculate the exact payout based on LIVE prices
+        # 2. Calculate payout and collect market drop amounts
         for fish_name, quantity in user_inv:
             if quantity > 0:
-                # Find which tier this specific fish belongs to
                 tier = species_to_tier.get(fish_name)
-                
-                # Safety check just in case an old deleted fish is in the DB
                 if not tier:
                     continue 
 
@@ -226,22 +281,42 @@ class FishingCommands(commands.Cog):
                 total_payout += (current_price * quantity)
                 total_fish_sold += quantity
                 
+                # Drop price by 0.5% of base value per single fish dumped
+                price_drop = int(quantity * (base_price * 0.005))
+                tier_drops[tier] = tier_drops.get(tier, 0) + price_drop
+                
         if total_fish_sold == 0:
             await interaction.followup.send("🪣 You don't have any fish to sell!")
             return
 
-        # 3. Execute the database transaction
-        self.db.sell_all_fish_db(user_id, username, total_payout)
+        # 3. Pass tier_drops directly into the upgraded database method!
+        self.db.sell_all_fish_db(user_id, username, total_payout, tier_drops, market_prices)
         
-        # 4. Build a satisfying receipt
+        # 4. Show market impact breakdown in the receipt
+        impacted_tiers_text = []
+        for tier, drop_amount in tier_drops.items():
+            if drop_amount > 0:
+                base_price = FISH_DATA[tier]["value"]
+                min_price = int(base_price * 0.4) # 40% floor constraint
+                old_price = market_prices.get(tier, base_price)
+                new_price = max(min_price, old_price - drop_amount)
+                
+                actual_drop = old_price - new_price
+                if actual_drop > 0:
+                    impacted_tiers_text.append(f"**{tier}**: -${actual_drop:,}")
+
+        # 5. Build dynamic receipt
         embed = discord.Embed(
             title="💰 Massive Payout!",
             description=f"You dumped **{total_fish_sold:,}** fish onto the market!",
             color=discord.Color.green()
         )
         embed.add_field(name="Total Cash Earned", value=f"`${total_payout:,}`", inline=False)
-        embed.set_footer(text="Check your new balance with /balance")
         
+        if impacted_tiers_text:
+            embed.add_field(name="📉 Market Damage Caused", value="\n".join(impacted_tiers_text), inline=False)
+            
+        embed.set_footer(text="Check your new balance with /balance")
         await interaction.followup.send(embed=embed)
 
 
