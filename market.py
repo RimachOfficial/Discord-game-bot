@@ -4,6 +4,8 @@ from discord.ext import commands, tasks
 import random
 from database import FISH_DATA
 
+minutes_of_update=5.0
+
 class MarketCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -13,21 +15,60 @@ class MarketCommands(commands.Cog):
     def cog_unload(self):
         self.update_prices.cancel() # Cleans up if the bot restarts
 
-    # Background task: Simulates natural market fluctuations every 30 minutes
-    @tasks.loop(minutes=30.0)
+    # Background task: Simulates natural market fluctuations every 5 minutes
+    @tasks.loop(minutes=minutes_of_update)
     async def update_prices(self):
+        # 1. Normal Market Fluctuations
         current_prices = self.db.get_market_prices()
         for tier, current_price in current_prices:
             base_price = FISH_DATA[tier]["value"]
             
-            # Solo-friendly fluctuation: shift price randomly by -15% to +20%
             change_percent = random.uniform(-0.15, 0.20)
             new_price = int(current_price * (1 + change_percent))
-            
-            # Safety caps: don't let prices drop below 50% of base value, or exceed 250%
-            new_price = max(int(base_price * 0.5), min(new_price, int(base_price * 2.5)))
+            new_price = max(int(base_price * 0.4), min(new_price, int(base_price * 2.5)))
             
             self.db.update_market_price(tier, new_price)
+
+        # 2. 🚨 Market Shocks (Random News Events)
+        # TEMPORARY FOR TESTING: Commenting out the 15% random chance so it triggers 100% of the time
+        # if random.random() < 0.15: 
+        if True:
+            print("🎲 Market loop ticked: Triggering a guaranteed breaking news event...")
+            event = random.choice([
+                {"msg": "⚠️ **ANCHOVY INFLATION!** Low tier fish prices skyrocketed!", "tier": "Bozo ⚪", "mult": 1.8},
+                {"msg": "🐋 **WHALE CONSERVATION ACT!** 'Your Mother' prices doubled!", "tier": "Your Mother 🟣", "mult": 2.0},
+                {"msg": "📉 **CRYPTO CRASH!** Rich players panic-selling God fish!", "tier": "God ✨", "mult": 0.4},
+                {"msg": "🦈 **SHARK WEEK!** Apex predators are in high demand!", "tier": "Rimach 🔴", "mult": 2.2},
+                {"msg": "🦠 **RED TIDE OUTBREAK!** Common fish populations decimated, prices surging!", "tier": "Common 🔘", "mult": 1.6}
+            ])
+            
+            updated_prices = dict(self.db.get_market_prices())
+            affected_tier = event["tier"]
+            
+            if affected_tier in updated_prices:
+                shock_price = int(updated_prices[affected_tier] * event["mult"])
+                self.db.update_market_price(affected_tier, shock_price)
+                
+                channel_ids = self.db.get_all_news_channels()
+                print(f"📡 Found {len(channel_ids)} registered news channel(s) in database.")
+                
+                embed = discord.Embed(
+                    title="📰 Breaking Market News!", 
+                    description=event["msg"], 
+                    color=discord.Color.red()
+                )
+                embed.set_footer(text=f"The value of {affected_tier} just drastically shifted!")
+
+                for cid in channel_ids:
+                    channel = self.bot.get_channel(int(cid))
+                    if channel:
+                        try:
+                            await channel.send(embed=embed)
+                            print(f"✅ Successfully sent news alert to channel ID: {cid}")
+                        except discord.Forbidden:
+                            print(f"❌ Failed to send: Lacking permissions in channel ID: {cid}")
+                    else:
+                        print(f"⚠️ Channel ID {cid} could not be found by the bot cache (is it in a different server?).")
 
     # 🛑 THE FIX: This forces the loop to wait until the bot is fully online!
     @update_prices.before_loop
@@ -40,7 +81,7 @@ class MarketCommands(commands.Cog):
         prices = self.db.get_market_prices()
         
         embed = discord.Embed(title="📈 Live Fish Stock Market", color=discord.Color.gold())
-        embed.description = "Prices shift naturally every 30 minutes. Large player dumps will crash a tier's value!"
+        embed.description = f"Prices shift naturally every {minutes_of_update} minutes. Large player dumps will crash a tier's value!"
         
         for tier, price in prices:
             base = FISH_DATA[tier]["value"]
@@ -117,6 +158,19 @@ class MarketCommands(commands.Cog):
         )
         
         await interaction.followup.send(embed=embed)
+
+    @app_commands.command(name="setnews", description="Set the channel for market breaking news! (Admins only)")
+    @app_commands.checks.has_permissions(manage_guild=True)
+    async def setnews(self, interaction: discord.Interaction, channel: discord.TextChannel):
+        # Save the chosen channel to the database
+        self.db.set_news_channel(str(interaction.guild_id), str(channel.id))
+        
+        embed = discord.Embed(
+            title="📰 News Channel Set!", 
+            description=f"Market crashes and spikes will now be broadcasted in {channel.mention}.",
+            color=discord.Color.green()
+        )
+        await interaction.response.send_message(embed=embed)
 
 async def setup(bot):
     await bot.add_cog(MarketCommands(bot))

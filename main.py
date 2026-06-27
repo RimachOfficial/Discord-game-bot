@@ -25,6 +25,8 @@ class BipbobBot(commands.Bot):
         print("✅ Loaded extension: inventory")
         await self.load_extension("market")
         print("✅ Loaded extension: market")
+        await self.load_extension("karma_system") # Add this line!
+        print("✅ Loaded extension: karma_system")
         
         # Sync the slash commands globally
         try:

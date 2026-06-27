@@ -96,6 +96,21 @@ class DatabaseManager:
                 current_price INTEGER
             )
         ''')
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS server_settings (
+                guild_id TEXT PRIMARY KEY,
+                news_channel_id TEXT
+            )
+        ''')
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS karma (
+                user_id TEXT,
+                fish_tier TEXT,
+                karma_points INTEGER DEFAULT 0,
+                PRIMARY KEY (user_id, fish_tier)
+            )
+        ''')
+        self.conn.commit()
         self.conn.commit()
 
     def init_market(self):
@@ -185,3 +200,38 @@ class DatabaseManager:
         )
         
         self.conn.commit()
+
+    def set_news_channel(self, guild_id, channel_id):
+        self.cursor.execute('''
+            INSERT INTO server_settings (guild_id, news_channel_id) 
+            VALUES (?, ?)
+            ON CONFLICT(guild_id) DO UPDATE SET news_channel_id = ?
+        ''', (guild_id, channel_id, channel_id))
+        self.conn.commit()
+
+    def get_all_news_channels(self):
+        self.cursor.execute("SELECT news_channel_id FROM server_settings")
+        return [row[0] for row in self.cursor.fetchall()]
+
+    def get_player_karma(self, user_id):
+        self.cursor.execute("SELECT fish_tier, karma_points FROM karma WHERE user_id = ?", (user_id,))
+        return self.cursor.fetchall()
+
+    def add_karma_and_clear_inventory(self, user_id, karma_updates):
+        """
+        karma_updates is a list of tuples: (user_id, tier_name, points, points)
+        """
+        # 1. Clear player's inventory completely
+        self.cursor.execute("DELETE FROM inventory WHERE user_id = ?", (user_id,))
+        
+        # 2. Add karma points (Upsert logic)
+        for _, tier, points in karma_updates:
+            self.cursor.execute('''
+                INSERT INTO karma (user_id, fish_tier, karma_points)
+                VALUES (?, ?, ?)
+                ON CONFLICT(user_id, fish_tier) 
+                DO UPDATE SET karma_points = karma_points + ?
+            ''', (user_id, tier, points, points))
+            
+        self.conn.commit()
+

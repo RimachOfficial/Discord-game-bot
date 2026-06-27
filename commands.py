@@ -14,29 +14,47 @@ class FishingCommands(commands.Cog):
     
     
     @app_commands.command(name="fish", description="Cast your line into the water!")
-    @app_commands.checks.cooldown(30, 30.0, key=lambda i: i.user.id)
+    @app_commands.checks.cooldown(5, 30.0, key=lambda i: i.user.id)
     async def fish(self, interaction: discord.Interaction):
+        # 🛡️ Defer the response instantly so the command doesn't lag out or timeout
+        await interaction.response.defer()
+        
         # 1. Roll for the fish
         tier = random.choices(FISH_TIERS, weights=FISH_WEIGHTS, k=1)[0]
         fish_name = random.choice(FISH_DATA[tier]["species"])
-        value = FISH_DATA[tier]["value"]
         gif_url = FISH_DATA[tier]["gif"]
         
-        # 2. Save to database
-        self.db.add_fish(str(interaction.user.id), interaction.user.name, fish_name, value)
+        # 2. Get Live Market Prices vs Base Values
+        market_prices = dict(self.db.get_market_prices())
+        base_price = FISH_DATA[tier]["value"]
+        current_market_price = market_prices.get(tier, base_price)
         
-        # 3. Create a beautiful Embed
+        # 3. Calculate trend arrow visual
+        if current_market_price > base_price:
+            trend = "🟢 Peak (+)"
+        elif current_market_price < base_price:
+            trend = "🔴 Crashed (-)"
+        else:
+            trend = "⚪ Stable"
+        
+        # 4. Save to database (Using fish_tier context to track inventories cleanly)
+        self.db.add_fish(str(interaction.user.id), interaction.user.name, fish_name, tier)
+        
+        # 5. Create the updated Embed displaying both values
         embed = discord.Embed(
             title="🎣 You cast your line...",
-            description=f"And reeled in a **{fish_name}**!\n\n✨ **Tier:** {tier}\n💰 **Value:** `${value:,}`",
+            description=f"And reeled in a **{fish_name}**!\n\n✨ **Tier:** {tier}",
             color=discord.Color.teal()
         )
         
-        # This injects the meme GIF directly into the embed layout
+        embed.add_field(name="💵 Live Market Price", value=f"`${current_market_price:,}` ({trend})", inline=True)
+        embed.add_field(name="🏛️ Base Value", value=f"`${base_price:,}`", inline=True)
+        
+        # Injects the meme GIF directly into the embed layout
         embed.set_image(url=gif_url)
         
-        # 4. Send the embed response
-        await interaction.response.send_message(embed=embed)
+        # 6. Send the embed response using followup since we deferred
+        await interaction.followup.send(embed=embed)
 
     @app_commands.command(name="leaderboard", description="Check the wealthiest fishermen in the server!")
     async def leaderboard(self, interaction: discord.Interaction):
