@@ -193,11 +193,19 @@ class DatabaseManager:
                 (user_id, fish_name)
             )
             
-        # 3. Apply the price crash to the market table
-        self.cursor.execute(
-            "UPDATE market SET current_price = MAX(current_price - ?, (SELECT MIN(current_price * 0.4) FROM market WHERE tier_name = ?)) WHERE tier_name = ?",
-            (price_drop, tier_name, tier_name)
-        )
+        # 3. 🛡️ THE FIX: Pull the real base price value from python
+        base_price = FISH_DATA[tier_name]["value"]
+        hard_floor = int(base_price * 0.4)
+
+        # 4. Safely drop the price without letting it sink past the hard floor
+        self.cursor.execute('''
+            UPDATE market 
+            SET current_price = CASE 
+                WHEN (current_price - ?) < ? THEN ? 
+                ELSE (current_price - ?) 
+            END 
+            WHERE tier_name = ?
+        ''', (price_drop, hard_floor, hard_floor, price_drop, tier_name))
         
         self.conn.commit()
 
