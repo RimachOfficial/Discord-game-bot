@@ -20,7 +20,7 @@ def calculate_dynamic_weights(raw_karma: dict, has_mod_app: bool, has_bf_repelle
         dynamic_weights.append(adjusted_weight)
     return dynamic_weights
 
-def calculate_catch_probabilities(tier: str, dynamic_weights: list[float]) -> tuple[float, float]:
+def calculate_catch_probabilities(tier: str, dynamic_weights: list[float], has_copium: bool = False, has_gamer_girl: bool = False) -> tuple[float, float]:
     """Calculates the exact chance a player had to catch their specific fish vs base rates."""
     total_weight_sum = sum(dynamic_weights)
     total_base_weight_sum = sum(FISH_WEIGHTS)
@@ -31,22 +31,38 @@ def calculate_catch_probabilities(tier: str, dynamic_weights: list[float]) -> tu
     
     species_in_tier = len(FISH_DATA[tier]["species"])
     
-    # Player's Karma Probability
-    tier_probability = my_tier_weight / total_weight_sum if total_weight_sum > 0 else 0
-    exact_catch_pct = (tier_probability / species_in_tier) * 100
-    
     # Global Base Probability
     base_tier_probability = base_tier_weight / total_base_weight_sum if total_base_weight_sum > 0 else 0
     base_catch_pct = (base_tier_probability / species_in_tier) * 100
     
+    # If Gamer Girl Bathwater is active, chances are strictly 50/50 for the two tiers
+    if has_gamer_girl:
+        if tier in ["Your Mother 🟣", "Gay 🌈"]:
+            exact_catch_pct = (0.50 / species_in_tier) * 100
+        else:
+            exact_catch_pct = 0.0
+        return base_catch_pct, exact_catch_pct
+
+    # Player's Karma Probability
+    tier_probability = my_tier_weight / total_weight_sum if total_weight_sum > 0 else 0
+    
+    if has_copium:
+        if tier == "God ✨":
+            tier_probability = 0.50 + (0.50 * tier_probability)
+        else:
+            tier_probability = 0.50 * tier_probability
+            
+    exact_catch_pct = (tier_probability / species_in_tier) * 100
     return base_catch_pct, exact_catch_pct
 
-def roll_fish(raw_karma: dict, has_mod_app: bool, has_bf_repellent: bool, has_copium: bool) -> dict:
+def roll_fish(raw_karma: dict, has_mod_app: bool, has_bf_repellent: bool, has_copium: bool, has_gamer_girl: bool = False) -> dict:
     """Executes the core fishing RNG logic."""
     dynamic_weights = calculate_dynamic_weights(raw_karma, has_mod_app, has_bf_repellent)
     
     # Determine the tier
-    if has_copium:
+    if has_gamer_girl:
+        tier = random.choice(["Your Mother 🟣", "Gay 🌈"])
+    elif has_copium:
         if random.random() < 0.50:
             tier = "God ✨"
         else:
@@ -57,7 +73,7 @@ def roll_fish(raw_karma: dict, has_mod_app: bool, has_bf_repellent: bool, has_co
     fish_name = random.choice(FISH_DATA[tier]["species"])
     
     # Calculate probabilities
-    base_catch_pct, exact_catch_pct = calculate_catch_probabilities(tier, dynamic_weights)
+    base_catch_pct, exact_catch_pct = calculate_catch_probabilities(tier, dynamic_weights, has_copium, has_gamer_girl)
     
     return {
         "tier": tier,

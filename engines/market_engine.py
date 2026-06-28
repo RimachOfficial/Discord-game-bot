@@ -1,6 +1,8 @@
 import random
 from constants import FISH_DATA
 
+chance_to_trigger_shock: float = 0.30  # chance per market update loop
+
 def calculate_market_fluctuations(current_prices: list[tuple[str, int]]) -> dict[str, int]:
     """Calculates normal market fluctuations. Returns a dict of tier -> new_price."""
     new_prices = {}
@@ -18,7 +20,7 @@ def calculate_market_fluctuations(current_prices: list[tuple[str, int]]) -> dict
 
 def generate_market_shock() -> dict | None:
     """Generates a random market shock event. Returns event dict or None."""
-    if random.random() < 0.15: 
+    if random.random() < chance_to_trigger_shock: 
         return random.choice([
             {"msg": "⚠️ **ANCHOVY INFLATION!** Low tier fish prices skyrocketed!", "tier": "Bozo ⚪", "mult": 1.8},
             {"msg": "🐋 **WHALE CONSERVATION ACT!** 'Your Mother' prices doubled!", "tier": "Your Mother 🟣", "mult": 2.0},
@@ -51,7 +53,7 @@ def calculate_sell_impact(tier: str, quantity_sold: int, current_unit_price: int
     
     return total_payout, actual_drop, new_price
 
-def calculate_buy_impact(tier: str, quantity_bought: int, current_unit_price: int, player_cash: int) -> dict:
+def calculate_buy_impact(tier: str, quantity_bought: int, current_unit_price: int, player_cash: int, has_credit_card: bool = False) -> dict:
     """Calculates cost, price bumps, and check affordability."""
     total_cost = current_unit_price * quantity_bought
     
@@ -59,8 +61,12 @@ def calculate_buy_impact(tier: str, quantity_bought: int, current_unit_price: in
         return {"success": False, "shortfall": total_cost - player_cash}
         
     base_price = FISH_DATA[tier]["value"]
-    # Surge by 0.5% of BASE value per unit bought
-    price_bump = int(quantity_bought * (base_price * 0.005))
+    
+    if has_credit_card:
+        price_bump = 0
+    else:
+        # Surge by 0.5% of BASE value per unit bought
+        price_bump = int(quantity_bought * (base_price * 0.005))
     
     # Enforce absolute max market ceiling (2.5x base)
     max_allowed_price = int(base_price * 2.5)
@@ -96,10 +102,9 @@ def calculate_sell_all_impact(user_inv: list[tuple[str, int]], market_prices: di
             
             if not has_tax_evasion:
                 price_drop = int(quantity * (base_price * 0.005))
+                if has_short_squeeze:
+                    price_drop *= 3 # Force a massive crash on the sold tiers
                 tier_drops[tier] = tier_drops.get(tier, 0) + price_drop
-
-    if has_short_squeeze and total_fish_sold > 0:
-        total_payout = int(total_payout * 1.20)
 
     sanitized_drops = {}
     impacted_tiers_text = []
@@ -108,7 +113,8 @@ def calculate_sell_all_impact(user_inv: list[tuple[str, int]], market_prices: di
         base_price = FISH_DATA[tier]["value"]
         old_price = market_prices.get(tier, base_price)
         
-        new_price = max(0, old_price - raw_drop)
+        hard_floor = int(base_price * 0.4)
+        new_price = max(hard_floor, old_price - raw_drop)
         actual_drop = old_price - new_price
         
         if actual_drop > 0:

@@ -78,38 +78,46 @@ ITEM_CATALOG = {
     "⚠️ Illegal Fishing Gear": {
         "🔋 Throw a Car Battery in the Ocean": {
             "type": "Consumable",
+            "price": 10000,
             "desc": "Instantly pulls 15 random fish into your bucket, but you lose 50 Karma because the ocean ecosystem absolutely hates you for it."
         },
         "🍼 Copium Inhaler": {
             "type": "Consumable",
+            "price": 25000,
             "desc": "Massive +50% luck boost to catch a `God ✨` tier for exactly one cast. If you still catch an `Old Boot`, the bot publicly pings you to laugh at your horrible luck."
         },
         "🧼 Gamer Girl Bathwater": {
             "type": "Lure",
-            "desc": "Guarantees your next 3 catches will exclusively be from the `Your Mother 🟣` or `Gay` tiers."
+            "price": 15000,
+            "desc": "Guarantees your next 3 catches will exclusively be from the `Your Mother 🟣` or `Gay 🌈` tiers."
         }
     },
     "📉 Market Manipulation": {
         "📱 Bogdanoff’s Burner Phone": {
             "type": "Consumable",
+            "price": 50000,
             "desc": "*\"He bought? Crash it.\"* Force a targeted Market Crash on a specific tier *after* you sell, ruining the price for everyone else on the server."
         },
         "📄 Tax Evasion Manual": {
             "type": "Passive",
+            "price": 2500000,
             "desc": "Your `/sell_all` dumps no longer trigger market crashes because you technically routed the sale through an offshore Cayman Islands account."
         },
         "💳 Mommy's Credit Card": {
             "type": "Passive",
+            "price": 5000000,
             "desc": "Using `/buy` no longer triggers a \"Price Surge\" penalty. The market just accepts the swiped card, allowing you to hoard endlessly."
         }
     },
     "🗑️ Server Degeneracy": {
         "♻️ Discord Mod Application": {
             "type": "Passive",
+            "price": 500000,
             "desc": "Makes you legally immune to catching `Wet Cardboard`. However, it doubles your chance of catching `Bozo ⚪`."
         },
         "🧢 The \"I Have a Boyfriend\" Repellent": {
             "type": "Passive",
+            "price": 1000000,
             "desc": "Completely blocks the `Common 🔘` tier from spawning. You will either catch total trash or something incredibly rare, with zero in-between."
         }
     }

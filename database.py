@@ -6,7 +6,7 @@ class DatabaseManager:
         self.conn = sqlite3.connect(db_name)
         self.cursor = self.conn.cursor()
         self.create_tables()
-        self.init_market() # Initialize market prices on startup if missing
+        self.init_market()
 
     def create_tables(self):
         self.cursor.execute('''
@@ -76,23 +76,25 @@ class DatabaseManager:
 
     def add_fish(self, user_id: str, username: str, fish_tier: str, tier: str):
         self.cursor.execute('''
-            INSERT INTO players (user_id, username) 
+            INSERT INTO players (user_id, username)
             VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE SET username = excluded.username
         ''', (user_id, username))
-        
         self.cursor.execute('''
-            INSERT INTO inventory (user_id, fish_tier, quantity) 
+            INSERT INTO inventory (user_id, fish_tier, quantity)
             VALUES(?, ?, 1) ON CONFLICT(user_id, fish_tier) DO UPDATE SET quantity = quantity + 1
         ''', (user_id, fish_tier))
-        
         self.conn.commit()
 
     def add_fish_bulk(self, user_id: str, fishes: list[dict]):
+        """Aggregates fish by name and does one upsert per unique species — never loops N times."""
+        counts: dict[str, int] = {}
         for f in fishes:
-            self.cursor.execute('''
-                INSERT INTO inventory (user_id, fish_tier, quantity) 
-                VALUES(?, ?, 1) ON CONFLICT(user_id, fish_tier) DO UPDATE SET quantity = quantity + 1
-            ''', (user_id, f["name"]))
+            counts[f["name"]] = counts.get(f["name"], 0) + 1
+        self.cursor.executemany('''
+            INSERT INTO inventory (user_id, fish_tier, quantity)
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_id, fish_tier) DO UPDATE SET quantity = quantity + excluded.quantity
+        ''', [(user_id, name, qty) for name, qty in counts.items()])
         self.conn.commit()
 
     def update_player_cash(self, user_id: str, amount: int, username: str = None):
@@ -111,15 +113,15 @@ class DatabaseManager:
     def get_top_players(self, limit: int = 5):
         self.cursor.execute('SELECT username, cash FROM players ORDER BY cash DESC LIMIT ?', (limit,))
         return self.cursor.fetchall()
-    
+
     def get_inventory(self, user_id: str):
         self.cursor.execute('''
-            SELECT fish_tier, quantity FROM inventory 
-            WHERE user_id = ? AND quantity > 0 
+            SELECT fish_tier, quantity FROM inventory
+            WHERE user_id = ? AND quantity > 0
             ORDER BY quantity DESC
         ''', (user_id,))
         return self.cursor.fetchall()
-    
+
     def clear_inventory(self, user_id: str):
         self.cursor.execute("UPDATE inventory SET quantity = 0 WHERE user_id = ?", (user_id,))
         self.conn.commit()
@@ -144,13 +146,15 @@ class DatabaseManager:
         self.conn.commit()
 
     def update_market_prices_bulk(self, new_prices: dict[str, int]):
-        for tier, price in new_prices.items():
-            self.cursor.execute("UPDATE market SET current_price = ? WHERE tier_name = ?", (price, tier))
+        self.cursor.executemany(
+            "UPDATE market SET current_price = ? WHERE tier_name = ?",
+            [(price, tier) for tier, price in new_prices.items()]
+        )
         self.conn.commit()
 
     def set_news_channel(self, guild_id: str, channel_id: str):
         self.cursor.execute('''
-            INSERT INTO server_settings (guild_id, news_channel_id) 
+            INSERT INTO server_settings (guild_id, news_channel_id)
             VALUES (?, ?)
             ON CONFLICT(guild_id) DO UPDATE SET news_channel_id = ?
         ''', (guild_id, channel_id, channel_id))
@@ -165,13 +169,12 @@ class DatabaseManager:
         return self.cursor.fetchall()
 
     def add_karma_points(self, user_id: str, karma_updates: list[tuple[str, int]]):
-        for tier, points in karma_updates:
-            self.cursor.execute('''
-                INSERT INTO karma (user_id, fish_tier, karma_points)
-                VALUES (?, ?, ?)
-                ON CONFLICT(user_id, fish_tier) 
-                DO UPDATE SET karma_points = karma_points + ?
-            ''', (user_id, tier, points, points))
+        self.cursor.executemany('''
+            INSERT INTO karma (user_id, fish_tier, karma_points)
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_id, fish_tier)
+            DO UPDATE SET karma_points = karma_points + excluded.karma_points
+        ''', [(user_id, tier, points) for tier, points in karma_updates])
         self.conn.commit()
 
     def deduct_karma_points(self, user_id: str, deductions: list[tuple[str, int]]):
@@ -196,7 +199,6 @@ class DatabaseManager:
         current = self.get_item_count(user_id, item_name)
         if current < amount:
             return False
-        
         if current == amount:
             self.cursor.execute("DELETE FROM player_items WHERE user_id = ? AND item_name = ?", (user_id, item_name))
         else:
@@ -216,7 +218,6 @@ class DatabaseManager:
     def get_buff(self, user_id: str, buff_name: str):
         self.cursor.execute("SELECT buff_value, expires_at FROM player_buffs WHERE user_id = ? AND buff_name = ?", (user_id, buff_name))
         result = self.cursor.fetchone()
-        
         if result:
             value, expires_at = result
             if expires_at > 0 and time.time() > expires_at:

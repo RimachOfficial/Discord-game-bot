@@ -4,7 +4,7 @@ from discord.ext import commands, tasks
 from constants import FISH_DATA, FISH_TO_TIER
 from engines import market_engine
 
-minutes_of_update=10.0
+minutes_of_update=5.0
 
 class MarketCommands(commands.Cog):
     def __init__(self, bot):
@@ -149,8 +149,13 @@ class MarketCommands(commands.Cog):
         current_unit_price = prices.get(chosen_tier, FISH_DATA[chosen_tier]["value"])
         player_cash = self.db.get_player_balance(user_id)
         
+        has_credit_card = (
+            self.db.get_item_count(user_id, "💳 Mommy's Credit Card") > 0
+            and self.db.get_buff(user_id, "item_disabled:💳 Mommy's Credit Card") is None
+        )
+        
         # Domain Logic
-        impact = market_engine.calculate_buy_impact(chosen_tier, quantity, current_unit_price, player_cash)
+        impact = market_engine.calculate_buy_impact(chosen_tier, quantity, current_unit_price, player_cash, has_credit_card)
         
         if not impact["success"]:
             await interaction.followup.send(f"💸 You don't have enough cash! You need `${impact['shortfall']:,}` more to buy **x{quantity} {chosen_tier}**.")
@@ -162,8 +167,39 @@ class MarketCommands(commands.Cog):
         # Save to DB
         self.db.update_player_cash(user_id, -total_cost)
         import random
-        fishes = [{"name": random.choice(FISH_DATA[chosen_tier]["species"])} for _ in range(quantity)]
-        self.db.add_fish_bulk(user_id, fishes)
+        import math
+        from collections import Counter
+        
+        species_list = FISH_DATA[chosen_tier]["species"]
+        species_counts = {}
+
+        # 1. If quantity is huge, use instant O(1) math instead of allocating gigabytes of memory
+        if quantity > 100000:
+            remaining_qty = quantity
+            for i in range(len(species_list) - 1):
+                p = 1 / (len(species_list) - i)
+                mu = remaining_qty * p
+                sigma = math.sqrt(remaining_qty * p * (1 - p))
+                count = max(0, min(remaining_qty, int(random.gauss(mu, sigma))))
+                species_counts[species_list[i]] = count
+                remaining_qty -= count
+            species_counts[species_list[-1]] = remaining_qty
+        else:
+            # Fast normal generation for smaller regular purchases
+            bought_species = random.choices(species_list, k=quantity)
+            species_counts = Counter(bought_species)
+        
+        # 2. Update the database using the compressed counts
+        for species_name, count in species_counts.items():
+            if count <= 0: continue
+            self.db.cursor.execute(
+                """
+                INSERT INTO inventory (user_id, fish_tier, quantity) VALUES (?, ?, ?)
+                ON CONFLICT(user_id, fish_tier) DO UPDATE SET quantity = quantity + ?
+                """,
+                (user_id, species_name, count, count)
+            )
+        self.db.conn.commit()
         self.db.update_market_price(chosen_tier, new_price)
 
         embed = discord.Embed(title="🛒 Market Purchase Complete!", color=discord.Color.gold())

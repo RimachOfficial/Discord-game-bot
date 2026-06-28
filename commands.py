@@ -18,15 +18,31 @@ class FishingCommands(commands.Cog):
         
         # 1. Fetch State
         raw_karma = dict(self.db.get_player_karma(user_id))
-        has_mod_app = self.db.get_item_count(user_id, "♻️ Discord Mod Application") > 0
-        has_bf_repellent = self.db.get_item_count(user_id, "🧢 The \"I Have a Boyfriend\" Repellent") > 0
+        has_mod_app = (
+            self.db.get_item_count(user_id, "♻️ Discord Mod Application") > 0
+            and self.db.get_buff(user_id, "item_disabled:♻️ Discord Mod Application") is None
+        )
+        has_bf_repellent = (
+            self.db.get_item_count(user_id, '\ud83e\udde2 The "I Have a Boyfriend" Repellent') > 0
+            and self.db.get_buff(user_id, 'item_disabled:\ud83e\udde2 The "I Have a Boyfriend" Repellent') is None
+        )
         has_copium = self.db.get_buff(user_id, "copium_active") is not None
+        
+        gamer_girl_charges = self.db.get_buff(user_id, "gamer_girl_charges")
+        has_gamer_girl = gamer_girl_charges is not None
         
         # 2. Execute Game Logic via Engine
         if has_copium:
             self.db.clear_buff(user_id, "copium_active")
+            
+        if has_gamer_girl:
+            charges = int(gamer_girl_charges) - 1
+            if charges > 0:
+                self.db.set_buff(user_id, "gamer_girl_charges", str(charges))
+            else:
+                self.db.clear_buff(user_id, "gamer_girl_charges")
 
-        result = fishing_engine.roll_fish(raw_karma, has_mod_app, has_bf_repellent, has_copium)
+        result = fishing_engine.roll_fish(raw_karma, has_mod_app, has_bf_repellent, has_copium, has_gamer_girl)
         tier = result["tier"]
         fish_name = result["fish_name"]
         
@@ -115,8 +131,16 @@ class FishingCommands(commands.Cog):
         user_id = str(interaction.user.id)
         
         raw_karma = dict(self.db.get_player_karma(user_id))
-        has_mod_app = self.db.get_item_count(user_id, "♻️ Discord Mod Application") > 0
-        has_bf_repellent = self.db.get_item_count(user_id, "🧢 The \"I Have a Boyfriend\" Repellent") > 0
+        has_mod_app = (
+            self.db.get_item_count(user_id, "♻️ Discord Mod Application") > 0
+            and self.db.get_buff(user_id, "item_disabled:♻️ Discord Mod Application") is None
+        )
+        has_bf_repellent = (
+            self.db.get_item_count(user_id, '🧢 The "I Have a Boyfriend" Repellent') > 0
+            and self.db.get_buff(user_id, 'item_disabled:🧢 The "I Have a Boyfriend" Repellent') is None
+        )
+        has_copium = self.db.get_buff(user_id, "copium_active") is not None
+        has_gamer_girl = self.db.get_buff(user_id, "gamer_girl_charges") is not None
         
         dynamic_weights = fishing_engine.calculate_dynamic_weights(raw_karma, has_mod_app, has_bf_repellent)
         
@@ -127,7 +151,7 @@ class FishingCommands(commands.Cog):
         )
         
         for i, tier in enumerate(FISH_TIERS):
-            base_prob, my_prob = fishing_engine.calculate_catch_probabilities(tier, dynamic_weights)
+            base_prob, my_prob = fishing_engine.calculate_catch_probabilities(tier, dynamic_weights, has_copium, has_gamer_girl)
             
             # Revert from per-species to per-tier for the pie chart display
             species_in_tier = len(FISH_DATA[tier]["species"])
@@ -157,7 +181,10 @@ class FishingCommands(commands.Cog):
             await interaction.followup.send("🪣 Your inventory is already empty!")
             return
 
-        has_tax_evasion = self.db.get_item_count(user_id, "📄 Tax Evasion Manual") > 0
+        has_tax_evasion = (
+            self.db.get_item_count(user_id, "📄 Tax Evasion Manual") > 0
+            and self.db.get_buff(user_id, "item_disabled:📄 Tax Evasion Manual") is None
+        )
         has_short_squeeze = self.db.get_buff(user_id, "short_squeeze") is not None
         
         from engines import market_engine
@@ -241,7 +268,11 @@ class FishingCommands(commands.Cog):
 
         elif actual_item_name == "📱 Bogdanoff’s Burner Phone":
             self.db.set_buff(user_id, "short_squeeze", "1")
-            await interaction.response.send_message("📱 *\"Dump eet.\"* Your next `/sell_all` will grant +20% bonus cash!")
+            await interaction.response.send_message("📱 *\"Dump eet.\"* Your next `/sell_all` will trigger a MASSIVE 3x market crash on everything you sell, ruining the economy!")
+            
+        elif actual_item_name == "🧼 Gamer Girl Bathwater":
+            self.db.set_buff(user_id, "gamer_girl_charges", "3")
+            await interaction.response.send_message("🧼 *glug glug* You drank the Bathwater! Your next 3 catches are guaranteed to be from `Your Mother 🟣` or `Gay 🌈`.")
             
         elif actual_item_name == "🔋 Throw a Car Battery in the Ocean":
             current_karma = self.db.get_player_karma(user_id)

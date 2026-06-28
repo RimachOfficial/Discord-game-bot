@@ -3,6 +3,14 @@ import os
 from dotenv import load_dotenv
 from discord.ext import commands
 from database import DatabaseManager
+import sys
+import io
+
+# Force Windows console to support emojis and complex unicode strings
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
 
 # 1. Load the secret token
 load_dotenv()
@@ -27,6 +35,8 @@ class BipbobBot(commands.Bot):
         print("✅ Loaded extension: market")
         await self.load_extension("karma_system") # Add this line!
         print("✅ Loaded extension: karma_system")
+        await self.load_extension("shop")
+        print("✅ Loaded extension: shop")
         
         # Sync the slash commands globally
         try:

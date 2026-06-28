@@ -1,56 +1,64 @@
-# 🎣 Bipbob: Discord Fishing & Economy Bot
+# 🎣 Discord Fishing Bot
 
-Bipbob is a fully-featured Discord bot that combines RNG fishing mechanics with a living, highly dynamic stock market. Players catch fish, hold them in their inventory, and sell them for profit—but the market reacts to their actions. If everyone dumps the same fish, the price crashes. If they hold, natural fluctuations and random market shocks can send prices to the moon!
+A chaotic, heavily economy-driven Discord fishing game built with `discord.py` and `sqlite3`. 
+Fish, trade on a dynamic live market, manipulate stocks, collect illegal black market items, and build your net worth!
 
-## ✨ Features
+## 🏗️ Architecture
 
-* **🎣 Interactive Fishing (`/fish`)**
-  * Roll for different tiers of fish ranging from *Bozo* to *God* tier.
-  * Every catch displays a beautiful Discord embed complete with tier-specific meme GIFs.
-  * 30-second cooldown to prevent spamming.
+This project strictly adheres to a **3-Tier Architecture (Separation of Concerns)** to ensure high modularity and clean, scalable code:
 
-* **🎒 Dynamic Inventory (`/inventory`)**
-  * Clean, side-by-side layout grouping fish by their tiers.
-  * Automatically calculates the live wealth of your current stash based on base values.
+1. **The Entry/Interface Layer (`commands.py`, `market.py`, `inventory.py`, `karma_system.py`)**
+   - Built as Discord Cogs.
+   - Parses Discord interactions and user inputs.
+   - Delegates all math and decision making to the Engine Layer.
+   - Returns stylized Discord Embeds and UI responses.
 
-* **📈 Slime Rancher-Style Economy (`/sell` & `/market`)**
-  * **Live Market:** Prices shift naturally every 5 minutes.
-  * **Supply & Demand:** Selling massive quantities of a single tier will actively crash its market value for the entire server.
-  * **Hoarding Rewarded:** Prices slowly heal over time, encouraging players to buy low and sell high.
+2. **The Business & Domain Logic Layer (`engines/*.py`)**
+   - `fishing_engine.py`: Handles RNG, Karma luck scaling, and passive item drop-rate manipulations.
+   - `market_engine.py`: Controls live market fluctuations, randomized news crashes/spikes, and buy/sell transaction limits.
+   - `economy_engine.py`: Processes live net worth evaluations and player portfolio generation based on fluctuating assets.
+   - `item_engine.py`: Governs the isolated effects of consumable items (e.g., throwing a car battery in the ocean).
 
-* **📰 Global News Network (`/setnews`)**
-  * 15% chance every 5 minutes for a **Market Shock** (e.g., "Crypto Crash" or "Whale Conservation Act").
-  * Shocks instantly skyrocket or crash a specific tier's price.
-  * Admins can set a news channel to receive global breaking news broadcasts automatically.
-
-## 🚀 Installation & Setup
-
-### Prerequisites
-* Python 3.8 or higher.
-* A Discord Bot Token (grab one from the [Discord Developer Portal](https://discord.com/developers/applications)).
-
-### Installation
-1. Clone the repository to your local machine.
-2. Install the required Python libraries:
-   ```bash
-   pip install discord.py
-   ```
-3. Insert your Bot Token inside `main.py` (or load it via environment variables).
-4. Run the bot:
-   ```bash
-   python main.py
-   ```
-*Note: The SQLite database (`fishing_game.db`) will automatically generate itself upon the first boot.*
-
-## 📜 Commands List
-
-| Command | Description | Permissions |
-| :--- | :--- | :--- |
-| `/fish` | Cast your line! Catches a random fish based on tier drop rates. | @everyone |
-| `/inventory` | View your caught fish, sorted by tier and calculated value. | @everyone |
-| `/market` | View the live stock market prices for all fish tiers. | @everyone |
-| `/sell [tier]` | Liquidates all fish in a specific tier for cash, impacting the market. | @everyone |
-| `/setnews [channel]`| Sets the channel for Market Shock news broadcasts. | Administrator/Manage Server |
+3. **The Data Access Layer (`database.py`)**
+   - Purely handles database schema creation, reading, updating, and deleting (CRUD).
+   - Contains exactly zero game logic, math, bounds checking, or item configurations.
+   - Serves strictly as a robust abstraction for `sqlite3`.
 
 ---
-*Built with ❤️ using `discord.py` and SQLite.*
+
+## 🚀 Features
+
+- **Dynamic Market Economy:** Fish prices are not static. The market naturally fluctuates every 10 minutes. Mass selling a specific fish will crash its value, while mass buying will surge its value.
+- **Breaking News Shocks:** Spontaneous events (like a Whale Conservation Act or a Crypto Crash) can instantly manipulate tier values and alert the server.
+- **Karma System:** Release your caught fish back into the ocean (`/free`) to gain Karma. Karma permanently boosts your RNG chances to catch rare fish.
+- **The Black Market:** Obtain illegal consumables and passive items to rig the game. Inhale Copium for a guaranteed God tier drop or use the Tax Evasion Manual to dump your inventory without crashing the market.
+- **Live Portfolios:** The `/balance` command calculates your liquid cash alongside your inventory's live market asset value.
+
+## ⚙️ Configuration
+
+All game balance data is centrally stored in `constants.py`:
+- `FISH_DATA` and `FISH_WEIGHTS` control base rarity and values.
+- `ITEM_CATALOG` defines the descriptions and mechanics of the items.
+
+## 🛠️ Commands
+
+### Fishing & Karma
+- `/fish` - Cast your line into the water! 
+- `/free` - Release your entire inventory into the ocean for Karma luck points.
+- `/karma` - View your permanent luck multipliers.
+- `/chances` - View your exact personalized drop rates for every tier.
+
+### Economy & Market
+- `/inventory` - View your stash and its live market performance vs. base value.
+- `/balance` - View your total net worth and liquid cash.
+- `/market` - View the live stock market prices and trends.
+- `/sell <tier>` - Sell all fish of a specific tier to the market.
+- `/sell_all` - Liquidate your entire inventory.
+- `/buy <tier> <qty>` - Buy fish directly from the market (causes price surge).
+- `/leaderboard` - Check the wealthiest players.
+
+### Items
+- `/items` - View the Black Market catalog.
+- `/use <item>` - Consume an item from your inventory.
+- `/give_item` *(Admin)* - Spawn a Black Market item.
+- `/setnews` *(Admin)* - Register the channel for Market Shock alerts.
