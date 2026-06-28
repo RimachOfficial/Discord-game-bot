@@ -1,7 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from database import FISH_DATA
+from constants import FISH_DATA, FISH_TO_TIER
 
 class KarmaSystem(commands.Cog):
     def __init__(self, bot):
@@ -13,26 +13,18 @@ class KarmaSystem(commands.Cog):
         await interaction.response.defer()
         user_id = str(interaction.user.id)
         
-        # 1. Fetch current inventory
         user_inv = self.db.get_inventory(user_id)
         
         if not user_inv or sum(q for _, q in user_inv) == 0:
             await interaction.followup.send("🪣 Your inventory is already empty! Go catch some fish first.")
             return
 
-        # Map species back to their tier to calculate karma points
-        # Every fish gives base karma equal to: (Base Value / 10) + Rarity Factor
-        species_to_tier = {}
-        for tier, info in FISH_DATA.items():
-            for species in info["species"]:
-                species_to_tier[species] = tier
-
         total_fish_freed = 0
-        karma_to_add = {} # dict mapping tier_name -> total_karma_gained
+        karma_to_add = {}
 
         for fish_name, quantity in user_inv:
-            if quantity > 0 and fish_name in species_to_tier:
-                tier = species_to_tier[fish_name]
+            if quantity > 0 and fish_name in FISH_TO_TIER:
+                tier = FISH_TO_TIER[fish_name]
                 base_val = FISH_DATA[tier]["value"]
                 
                 # Math: Calculate karma per fish. Minimum 1 point.
@@ -42,13 +34,11 @@ class KarmaSystem(commands.Cog):
                 karma_to_add[tier] = karma_to_add.get(tier, 0) + total_karma_for_species
                 total_fish_freed += quantity
 
-        # 2. Re-format data for the database query
-        db_karma_payload = [(user_id, tier, points) for tier, points in karma_to_add.items()]
+        db_karma_payload = [(tier, points) for tier, points in karma_to_add.items()]
         
-        # 3. Process the mass release transaction
-        self.db.add_karma_and_clear_inventory(user_id, db_karma_payload)
+        self.db.clear_inventory(user_id)
+        self.db.add_karma_points(user_id, db_karma_payload)
 
-        # 4. Build a beautiful presentation embed
         embed = discord.Embed(
             title="🌊 The Ocean Thanks You!", 
             description=f"You opened your buckets and released **{total_fish_freed}** fish back into the wild!", 
@@ -70,7 +60,6 @@ class KarmaSystem(commands.Cog):
         await interaction.response.defer()
         user_id = str(interaction.user.id)
         
-        # Fetch player's current karma
         raw_karma = dict(self.db.get_player_karma(user_id))
         
         embed = discord.Embed(
@@ -81,7 +70,6 @@ class KarmaSystem(commands.Cog):
         
         for tier in FISH_DATA.keys():
             points = raw_karma.get(tier, 0)
-            # Math: 1% luck bonus per 100 points
             luck_bonus = points / 100.0
             
             embed.add_field(

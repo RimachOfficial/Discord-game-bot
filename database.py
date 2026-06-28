@@ -1,72 +1,5 @@
 import sqlite3
-import random
-
-FISH_DATA = {
-    "Bozo ⚪": {
-        "value": 10,
-        "species": ["Old Boot", "Wet Cardboard", "Plastic Bottle"],
-        "gif": "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaXZycDRqY3k1cHBiOWhmbGxmNTN3bTI4cmpybXZmM25xN24zaXRiYiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/n6z0sYdK2qIUI6Uf8g/giphy.gif" # Clown putting on makeup
-    },
-    "Common 🔘": {
-        "value": 25,
-        "species": ["Atlantic Cod", "River Carp", "Pond Tilapia"],
-        "gif": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZHN6amt4Y3JwdmM2MWx4aTFkY21wNTFoeXZsa2hsanhueXlsZ3kzZSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/lPuW5AlR9AeWzSsIqi/giphy.gif" # Low-res spinning fish
-    },
-    "Uncommon 🔵": {
-        "value": 50,
-        "species": ["Sockeye Salmon", "Rainbow Trout", "Red Snapper"],
-        "gif": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZHN6amt4Y3JwdmM2MWx4aTFkY21wNTFoeXZsa2hsanhueXlsZ3kzZSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/7eVp9MHlNI90c/giphy.gif" # Cat slapping a fish
-    },
-    "El Bozo 🟢": {
-        "value": 100,
-        "species": ["Mako Shark (1,221 lbs)", "Hammerhead Shark (1,280 lbs)", "Sixgill Shark (1,298 lbs)"],
-        "gif": "https://media.tenor.com/x8v1oNUOmg4AAAAM/clown-makeup.gif" # RIP Bozo dance
-    },
-    "Your Mother 🟣": {
-        "value": 500,
-        "species": ["Whale Shark (41,000 lbs - Absolute Unit)"],
-        "gif": "https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3aTQ5NHBucjV0MndsaG50a3dvbHFwczgzN3pheW1lMGxtbXZtcGticSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/dJeVcFUo10kcU/giphy.gif" # Massive whale splash
-    },
-    "Legendary 🟡": {
-        "value": 1000,
-        "species": ["Pacific Blue Marlin (1,376 lbs)", "Atlantic Blue Marlin (1,402 lbs)", "Black Marlin (1,560 lbs)"],
-        "gif": "https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3c2RjNXlldjcwYndxeDVycTgwZjU5dHFucmV2bXZrNXI5eDFzY2swZSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/wWXH3OgwPGXlJdZw26/giphy.gif" # Hype fishing freakout
-    },
-    "Rimach 🔴": {
-        "value": 5000,
-        "species": ["Greenland Shark (1,708 lbs)", "Tiger Shark (1,785 lbs)"],
-        "gif": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZnVreXRoNHo5MGQ3bzljeHN1ODZ6ODQ0OG0zYnd5YjE3NjNremNieCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/ZNLKLh8vlfRrWnL4mj/giphy.gif" # GigaChad nodding
-    },
-    "Gay 🌈": {
-        "value": 20000,
-        "species": ["Blobfish 👁️👄👁️", "Ocean Sunfish 🐋", "Goblin Shark 👺"],
-        "gif": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaWx4MHpnM2J0enZpYmt3YnBuNzlvdDVxbDNoeGdhc2dyajVkYThmdyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/W5NrtmMTEBP3pTKr1L/giphy.gif" # Rainbow dancing Blobfish
-    },
-    "Divine ⚪🟣": {
-        "value": 100000,
-        "species": ["Great White Shark (2,664 lbs - Alfred Dean Record)"],
-        "gif": "https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3ajhtZWk0NmhwMXlzZngxM2J2YXp5MDMxbDJmczN0YTIyN29leGV0eSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/ai0YLvAS4kbTy/giphy.gif" # Ascending holy fish
-    },
-    "God ✨": {
-        "value": 1000000,
-        "species": ["The Legendary Kraken 🦑", "Poseidon's Goldfish 🔱"],
-        "gif": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdnhjdTljdTZtYXVvMTA0Y3p6N2NpYmxhZzUxamJlNTN3YzEyazNoZSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/NWqFfIIxiJyAE/giphy.gif" # Galaxy spinning fish
-    }
-}
-
-# Automatically extract lists for our RNG roller
-FISH_TIERS = list(FISH_DATA.keys())
-FISH_WEIGHTS = [35, 25, 15, 10, 8, 5, 1.5, 0.4, 0.09, 0.01]
-# TEMPORARY FOR TESTING: Inverted weights to test rare fish drops
-#FISH_WEIGHTS = [0.01, 0.09, 0.4, 1.5, 5, 8, 10, 15, 25, 35]
-
-# Automatically build a flat lookup dictionary for inventory.py to check values
-FISH_VALUES = {}
-for tier, info in FISH_DATA.items():
-    for fish in info["species"]:
-        FISH_VALUES[fish] = info["value"]
-
-
+import time
 
 class DatabaseManager:
     def __init__(self, db_name="fishing_game.db"):
@@ -76,7 +9,6 @@ class DatabaseManager:
         self.init_market() # Initialize market prices on startup if missing
 
     def create_tables(self):
-        # Existing tables...
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS players (
                 user_id TEXT PRIMARY KEY,
@@ -92,7 +24,6 @@ class DatabaseManager:
                 PRIMARY KEY (user_id, fish_tier)
             )
         ''')
-        # NEW TABLE: Tracks the live market price of each tier
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS market (
                 tier_name TEXT PRIMARY KEY,
@@ -113,11 +44,27 @@ class DatabaseManager:
                 PRIMARY KEY (user_id, fish_tier)
             )
         ''')
-        self.conn.commit()
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS player_items (
+                user_id TEXT,
+                item_name TEXT,
+                quantity INTEGER DEFAULT 0,
+                PRIMARY KEY (user_id, item_name)
+            )
+        ''')
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS player_buffs (
+                user_id TEXT,
+                buff_name TEXT,
+                buff_value TEXT,
+                expires_at REAL,
+                PRIMARY KEY (user_id, buff_name)
+            )
+        ''')
         self.conn.commit()
 
     def init_market(self):
-        # If the market table is empty, populate it with base values from FISH_DATA
+        from constants import FISH_DATA
         self.cursor.execute("SELECT COUNT(*) FROM market")
         if self.cursor.fetchone()[0] == 0:
             for tier, info in FISH_DATA.items():
@@ -127,30 +74,45 @@ class DatabaseManager:
                 )
             self.conn.commit()
 
-    def add_fish(self, user_id: str, username: str, fish_tier: str, value: int):
-        # 1. Ensure player exists in DB (and update their username if they changed it)
+    def add_fish(self, user_id: str, username: str, fish_tier: str, tier: str):
         self.cursor.execute('''
             INSERT INTO players (user_id, username) 
             VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE SET username = excluded.username
         ''', (user_id, username))
         
-        # 2. Add 1 to their specific fish inventory
         self.cursor.execute('''
             INSERT INTO inventory (user_id, fish_tier, quantity) 
             VALUES(?, ?, 1) ON CONFLICT(user_id, fish_tier) DO UPDATE SET quantity = quantity + 1
         ''', (user_id, fish_tier))
         
-        # 3. Add the fish's value to their total net worth (using the cash column for now)
-        self.cursor.execute('UPDATE players SET cash = cash + ? WHERE user_id = ?', (value, user_id))
+        self.conn.commit()
+
+    def add_fish_bulk(self, user_id: str, fishes: list[dict]):
+        for f in fishes:
+            self.cursor.execute('''
+                INSERT INTO inventory (user_id, fish_tier, quantity) 
+                VALUES(?, ?, 1) ON CONFLICT(user_id, fish_tier) DO UPDATE SET quantity = quantity + 1
+            ''', (user_id, f["name"]))
+        self.conn.commit()
+
+    def update_player_cash(self, user_id: str, amount: int, username: str = None):
+        if username:
+            self.cursor.execute('''
+                INSERT INTO players (user_id, username, cash) VALUES (?, ?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET cash = cash + ?, username = excluded.username
+            ''', (user_id, username, amount, amount))
+        else:
+            self.cursor.execute('''
+                INSERT INTO players (user_id, cash) VALUES (?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET cash = cash + ?
+            ''', (user_id, amount, amount))
         self.conn.commit()
 
     def get_top_players(self, limit: int = 5):
-        # Grabs the top players sorted by their cash/net worth
         self.cursor.execute('SELECT username, cash FROM players ORDER BY cash DESC LIMIT ?', (limit,))
         return self.cursor.fetchall()
     
     def get_inventory(self, user_id: str):
-        # Grabs all fish the user owns, sorted by amount
         self.cursor.execute('''
             SELECT fish_tier, quantity FROM inventory 
             WHERE user_id = ? AND quantity > 0 
@@ -158,124 +120,35 @@ class DatabaseManager:
         ''', (user_id,))
         return self.cursor.fetchall()
     
+    def clear_inventory(self, user_id: str):
+        self.cursor.execute("UPDATE inventory SET quantity = 0 WHERE user_id = ?", (user_id,))
+        self.conn.commit()
+
+    def clear_specific_fish(self, user_id: str, fish_names: list[str]):
+        for fish_name in fish_names:
+            self.cursor.execute(
+                "UPDATE inventory SET quantity = 0 WHERE user_id = ? AND fish_tier = ?",
+                (user_id, fish_name)
+            )
+        self.conn.commit()
+
     def get_market_prices(self):
         self.cursor.execute("SELECT tier_name, current_price FROM market")
         return self.cursor.fetchall()
 
-    def update_market_price(self, tier_name, new_price):
+    def update_market_price(self, tier_name: str, new_price: int):
         self.cursor.execute(
             "UPDATE market SET current_price = ? WHERE tier_name = ?",
             (new_price, tier_name)
         )
         self.conn.commit()
 
-    def sell_fish_db(self, user_id, username, tier_name, quantity, total_payout):
-        # 1. Safely add cash and create profile if missing
-        self.cursor.execute(
-            """
-            INSERT INTO players (user_id, username, cash)
-            VALUES (?, ?, ?)
-            ON CONFLICT(user_id) DO UPDATE SET cash = cash + ?
-            """,
-            (user_id, username, total_payout, total_payout),
-        )
-
-        # 2. Safely create inventory row if missing
-        self.cursor.execute(
-            """
-            INSERT INTO inventory (user_id, fish_tier, quantity)
-            VALUES (?, ?, 0)
-            ON CONFLICT(user_id, fish_tier) DO NOTHING
-            """,
-            (user_id, tier_name),
-        )
-
-        # 3. Remove the sold fish
-        self.cursor.execute(
-            """
-            UPDATE inventory
-            SET quantity = quantity - ?
-            WHERE user_id = ? AND fish_tier = ?
-            """,
-            (quantity, user_id, tier_name),
-        )
-
-        self.conn.commit()
-    
-    def sell_all_fish_db(self, user_id, username, total_payout, tier_drops, market_prices):
-        # 1. Safely give the player their massive payout
-        self.cursor.execute(
-            """
-            INSERT INTO players (user_id, username, cash)
-            VALUES (?, ?, ?)
-            ON CONFLICT(user_id) DO UPDATE SET cash = cash + ?
-            """,
-            (user_id, username, total_payout, total_payout),
-        )
-
-        # 2. Wipe their entire inventory back to 0
-        self.cursor.execute(
-            """
-            UPDATE inventory
-            SET quantity = 0
-            WHERE user_id = ?
-            """,
-            (user_id,),
-        )
-
-        # 3. Crash the live market values for each affected tier
-        for tier, drop_amount in tier_drops.items():
-            if drop_amount > 0:
-                base_price = FISH_DATA[tier]["value"]
-                min_price = int(base_price * 0.4) # Enforce 40% lower floor limit
-                old_price = market_prices.get(tier, base_price)
-                
-                # Determine new price after drop without dipping past floor
-                new_price = max(min_price, old_price - drop_amount)
-                
-                self.cursor.execute(
-                    """
-                    UPDATE market 
-                    SET current_price = ? 
-                    WHERE tier_name = ?
-                    """,
-                    (new_price, tier)
-                )
-
-        # Commit everything as a unified database update
+    def update_market_prices_bulk(self, new_prices: dict[str, int]):
+        for tier, price in new_prices.items():
+            self.cursor.execute("UPDATE market SET current_price = ? WHERE tier_name = ?", (price, tier))
         self.conn.commit()
 
-    def execute_sell(self, user_id, fish_species_list, tier_name, total_payout, price_drop):
-        # 1. Add cash to the player (and create player profile if missing)
-        self.cursor.execute('''
-            INSERT INTO players (user_id, cash) VALUES (?, ?)
-            ON CONFLICT(user_id) DO UPDATE SET cash = cash + ?
-        ''', (user_id, total_payout, total_payout))
-        
-        # 2. Zero out the quantities of these specific fish for this user
-        for fish_name in fish_species_list:
-            self.cursor.execute(
-                "UPDATE inventory SET quantity = 0 WHERE user_id = ? AND fish_tier = ?",
-                (user_id, fish_name)
-            )
-            
-        # 3. 🛡️ THE FIX: Pull the real base price value from python
-        base_price = FISH_DATA[tier_name]["value"]
-        hard_floor = int(base_price * 0.4)
-
-        # 4. Safely drop the price without letting it sink past the hard floor
-        self.cursor.execute('''
-            UPDATE market 
-            SET current_price = CASE 
-                WHEN (current_price - ?) < ? THEN ? 
-                ELSE (current_price - ?) 
-            END 
-            WHERE tier_name = ?
-        ''', (price_drop, hard_floor, hard_floor, price_drop, tier_name))
-        
-        self.conn.commit()
-
-    def set_news_channel(self, guild_id, channel_id):
+    def set_news_channel(self, guild_id: str, channel_id: str):
         self.cursor.execute('''
             INSERT INTO server_settings (guild_id, news_channel_id) 
             VALUES (?, ?)
@@ -287,66 +160,79 @@ class DatabaseManager:
         self.cursor.execute("SELECT news_channel_id FROM server_settings")
         return [row[0] for row in self.cursor.fetchall()]
 
-    def get_player_karma(self, user_id):
+    def get_player_karma(self, user_id: str):
         self.cursor.execute("SELECT fish_tier, karma_points FROM karma WHERE user_id = ?", (user_id,))
         return self.cursor.fetchall()
 
-    def add_karma_and_clear_inventory(self, user_id, karma_updates):
-        """
-        karma_updates is a list of tuples: (user_id, tier_name, points, points)
-        """
-        # 1. Clear player's inventory completely
-        self.cursor.execute("DELETE FROM inventory WHERE user_id = ?", (user_id,))
-        
-        # 2. Add karma points (Upsert logic)
-        for _, tier, points in karma_updates:
+    def add_karma_points(self, user_id: str, karma_updates: list[tuple[str, int]]):
+        for tier, points in karma_updates:
             self.cursor.execute('''
                 INSERT INTO karma (user_id, fish_tier, karma_points)
                 VALUES (?, ?, ?)
                 ON CONFLICT(user_id, fish_tier) 
                 DO UPDATE SET karma_points = karma_points + ?
             ''', (user_id, tier, points, points))
-            
         self.conn.commit()
 
-    def execute_buy(self, user_id, username, fish_name, tier_name, total_cost, price_bump):
-        # 1. Deduct cash from the player
-        self.cursor.execute(
-            """
-            UPDATE players 
-            SET cash = cash - ? 
-            WHERE user_id = ?
-            """,
-            (total_cost, user_id)
-        )
-
-        # 2. Add the bought fish to their inventory (UPSERT safe)
-        self.cursor.execute(
-            """
-            INSERT INTO inventory (user_id, fish_tier, quantity)
-            VALUES (?, ?, 1)
-            ON CONFLICT(user_id, fish_tier) DO UPDATE SET quantity = quantity + 1
-            """,
-            (user_id, fish_name) # Note: If your inventory tracks species name, pass fish_name here
-        )
-
-        # 3. Drive the market price UP
-        self.cursor.execute(
-            """
-            UPDATE market 
-            SET price = price + ? 
-            WHERE fish_tier = ?
-            """,
-            (price_bump, tier_name)
-        )
-
-        # Enforce the upper price ceiling (2.5x base price max, mirroring your loop)
-        # We handle this inside the app code right before saving, or let the market loop clip it later.
+    def deduct_karma_points(self, user_id: str, deductions: list[tuple[str, int]]):
+        for tier, points in deductions:
+            self.cursor.execute(
+                "UPDATE karma SET karma_points = karma_points - ? WHERE user_id = ? AND fish_tier = ?",
+                (points, user_id, tier)
+            )
         self.conn.commit()
 
     def get_player_balance(self, user_id: str) -> int:
-        """Fetches the player's cash balance safely."""
         self.cursor.execute("SELECT cash FROM players WHERE user_id = ?", (user_id,))
         row = self.cursor.fetchone()
         return row[0] if row else 0
 
+    def get_item_count(self, user_id: str, item_name: str) -> int:
+        self.cursor.execute("SELECT quantity FROM player_items WHERE user_id = ? AND item_name = ?", (user_id, item_name))
+        result = self.cursor.fetchone()
+        return result[0] if result else 0
+
+    def consume_item(self, user_id: str, item_name: str, amount: int = 1) -> bool:
+        current = self.get_item_count(user_id, item_name)
+        if current < amount:
+            return False
+        
+        if current == amount:
+            self.cursor.execute("DELETE FROM player_items WHERE user_id = ? AND item_name = ?", (user_id, item_name))
+        else:
+            self.cursor.execute("UPDATE player_items SET quantity = quantity - ? WHERE user_id = ? AND item_name = ?", (amount, user_id, item_name))
+        self.conn.commit()
+        return True
+
+    def set_buff(self, user_id: str, buff_name: str, value: str = "1", duration_seconds: int = 0):
+        expires_at = time.time() + duration_seconds if duration_seconds > 0 else 0
+        self.cursor.execute('''
+            INSERT INTO player_buffs (user_id, buff_name, buff_value, expires_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(user_id, buff_name) DO UPDATE SET buff_value = excluded.buff_value, expires_at = excluded.expires_at
+        ''', (user_id, buff_name, value, expires_at))
+        self.conn.commit()
+
+    def get_buff(self, user_id: str, buff_name: str):
+        self.cursor.execute("SELECT buff_value, expires_at FROM player_buffs WHERE user_id = ? AND buff_name = ?", (user_id, buff_name))
+        result = self.cursor.fetchone()
+        
+        if result:
+            value, expires_at = result
+            if expires_at > 0 and time.time() > expires_at:
+                self.clear_buff(user_id, buff_name)
+                return None
+            return value
+        return None
+
+    def clear_buff(self, user_id: str, buff_name: str):
+        self.cursor.execute("DELETE FROM player_buffs WHERE user_id = ? AND buff_name = ?", (user_id, buff_name))
+        self.conn.commit()
+
+    def add_item(self, user_id: str, item_name: str, quantity: int = 1):
+        self.cursor.execute('''
+            INSERT INTO player_items (user_id, item_name, quantity)
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_id, item_name) DO UPDATE SET quantity = quantity + ?
+        ''', (user_id, item_name, quantity, quantity))
+        self.conn.commit()

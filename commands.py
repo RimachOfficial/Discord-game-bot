@@ -1,11 +1,9 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-import random
-from database import FISH_TIERS
-from database import FISH_VALUES
-from database import FISH_WEIGHTS
-from database import FISH_DATA
+from constants import FISH_DATA, FISH_TIERS, ITEM_CHOICES
+from engines import fishing_engine, economy_engine, item_engine
+from discord.app_commands import Choice
 
 class FishingCommands(commands.Cog):
     def __init__(self, bot):
@@ -15,91 +13,57 @@ class FishingCommands(commands.Cog):
     @app_commands.command(name="fish", description="Cast your line into the water!")
     @app_commands.checks.cooldown(30, 30.0, key=lambda i: i.user.id)
     async def fish(self, interaction: discord.Interaction):
-        # 🛡️ Defer the response instantly so the command doesn't lag out or timeout
         await interaction.response.defer()
-        
         user_id = str(interaction.user.id)
         
-        # --- ✨ KARMA LUCK MATH ✨ ---
-        # 1. Fetch the user's accumulated Karma from the database
+        # 1. Fetch State
         raw_karma = dict(self.db.get_player_karma(user_id))
+        has_mod_app = self.db.get_item_count(user_id, "♻️ Discord Mod Application") > 0
+        has_bf_repellent = self.db.get_item_count(user_id, "🧢 The \"I Have a Boyfriend\" Repellent") > 0
+        has_copium = self.db.get_buff(user_id, "copium_active") is not None
         
-        # 2. Build personalized, dynamic drop weights based on their Karma!
-        dynamic_weights = []
-        for i, tier in enumerate(FISH_TIERS):
-            base_weight = FISH_WEIGHTS[i]
-            points = raw_karma.get(tier, 0)
+        # 2. Execute Game Logic via Engine
+        if has_copium:
+            self.db.clear_buff(user_id, "copium_active")
+
+        result = fishing_engine.roll_fish(raw_karma, has_mod_app, has_bf_repellent, has_copium)
+        tier = result["tier"]
+        fish_name = result["fish_name"]
+        
+        if has_copium and fish_name == "Old Boot":
+            self.db.add_fish(user_id, interaction.user.name, fish_name, tier)
+            await interaction.followup.send(f"🍼 **LMAOOO** {interaction.user.mention} ripped the Copium Inhaler, had a 50% chance for a God tier, and STILL caught an **Old Boot**. Point and laugh! 🫵😂")
+            return
             
-            # Math: Every 100 points = +1% to the base weight
-            luck_bonus_pct = points / 100.0 
-            adjusted_weight = base_weight * (1 + (luck_bonus_pct / 100.0))
-            
-            dynamic_weights.append(adjusted_weight)
+        # 3. Save to DB
+        self.db.add_fish(user_id, interaction.user.name, fish_name, tier)
         
-        # 3. Roll for the fish using their NEW SUPERCHARGED weights
-        tier = random.choices(FISH_TIERS, weights=dynamic_weights, k=1)[0]
-        fish_name = random.choice(FISH_DATA[tier]["species"])
-        gif_url = FISH_DATA[tier]["gif"]
-        
-        # --- 🎲 EXACT DROP CHANCE MATH ---
-        total_weight_sum = sum(dynamic_weights)
-        total_base_weight_sum = sum(FISH_WEIGHTS) # Get the global base total
-        
-        tier_index = FISH_TIERS.index(tier)
-        my_tier_weight = dynamic_weights[tier_index]
-        base_tier_weight = FISH_WEIGHTS[tier_index]
-        
-        species_in_tier = len(FISH_DATA[tier]["species"])
-        
-        # 1. Calculate Player's Karma Probability
-        tier_probability = my_tier_weight / total_weight_sum
-        exact_catch_pct = (tier_probability / species_in_tier) * 100
-        
-        # 2. Calculate Global Base Probability
-        base_tier_probability = base_tier_weight / total_base_weight_sum
-        base_catch_pct = (base_tier_probability / species_in_tier) * 100
-        # ---------------------------------
-        
-        # 4. Get Live Market Prices vs Base Values
+        # 4. Fetch Market Prices for Presentation
         market_prices = dict(self.db.get_market_prices())
         base_price = FISH_DATA[tier]["value"]
         current_market_price = market_prices.get(tier, base_price)
         
-        # 5. Calculate trend arrow visual
-        if current_market_price > base_price:
-            trend = "🟢 Peak (+)"
-        elif current_market_price < base_price:
-            trend = "🔴 Crashed (-)"
-        else:
-            trend = "⚪ Stable"
+        trend = "🟢 Peak (+)" if current_market_price > base_price else "🔴 Crashed (-)" if current_market_price < base_price else "⚪ Stable"
         
-        # 6. Save to database 
-        self.db.add_fish(user_id, interaction.user.name, fish_name, tier)
-        
-        # 7. Create the updated Embed displaying both drop chances!
+        # 5. Build Presentation
         embed = discord.Embed(
             title="🎣 You cast your line...",
             description=(
                 f"And reeled in a **{fish_name}**!\n\n"
                 f"✨ **Tier:** {tier}\n"
-                f"📊 **Base Chance:** `{base_catch_pct:.3f}%`\n"
-                f"🎲 **Your Chance:** `{exact_catch_pct:.3f}%`"
+                f"📊 **Base Chance:** `{result['base_catch_pct']:.3f}%`\n"
+                f"🎲 **Your Chance:** `{result['exact_catch_pct']:.3f}%`"
             ),
             color=discord.Color.teal()
         )
-        
         embed.add_field(name="💵 Live Market Price", value=f"`${current_market_price:,}` ({trend})", inline=True)
         embed.add_field(name="🏛️ Base Value", value=f"`${base_price:,}`", inline=True)
+        embed.set_image(url=FISH_DATA[tier]["gif"])
         
-        # Injects the meme GIF directly into the embed layout
-        embed.set_image(url=gif_url)
-        
-        # 8. Send the embed response
         await interaction.followup.send(embed=embed)
 
     @app_commands.command(name="leaderboard", description="Check the wealthiest fishermen in the server!")
     async def leaderboard(self, interaction: discord.Interaction):
-        # 1. Fetch real data from the DB
         top_players = self.db.get_top_players(5)
         
         if not top_players:
@@ -107,150 +71,85 @@ class FishingCommands(commands.Cog):
             return
             
         embed = discord.Embed(title="🏆 Wealthiest Fishermen 🏆", color=discord.Color.gold())
-        
-        # 2. Loop through DB rows instead of fake data
         for index, (name, wealth) in enumerate(top_players, start=1):
             embed.add_field(name=f"#{index} {name}", value=f"💰 ${wealth:,}", inline=False)
             
         await interaction.response.send_message(embed=embed)
 
-    # This automatically catches errors in this specific Cog
     async def cog_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.CommandOnCooldown):
-            # ephemeral=True means only the user who spammed the command can see this warning
             await interaction.response.send_message(
                 f"⏳ The fish got spooked! Wait {error.retry_after:.1f} seconds before casting again.", 
                 ephemeral=True
             )
         else:
-            # If it's a different error, just print it to the terminal
             print(f"Error: {error}")
-
 
     @app_commands.command(name="balance", description="View your exact balance in $!")
     async def view_balance(self, interaction: discord.Interaction):
         await interaction.response.defer()
-
         user_id = str(interaction.user.id)
         
-        # 1. Fetch wallet cash safely (it's a direct integer, no dict needed!)
         wallet_cash = self.db.get_player_balance(user_id)
-
-        # 2. Fetch inventory and live market prices to calculate asset value
         user_inv = self.db.get_inventory(user_id)
         market_prices = dict(self.db.get_market_prices())
 
-        # Reverse lookup map to match specific fish species to their market tier
-        species_to_tier = {}
-        for tier_key, data in FISH_DATA.items():
-            for species in data["species"]:
-                species_to_tier[species] = tier_key
-
-        inventory_value = 0
-        for fish_name, quantity in user_inv:
-            if quantity > 0:
-                tier = species_to_tier.get(fish_name)
-                if tier:
-                    base_price = FISH_DATA[tier]["value"]
-                    current_price = market_prices.get(tier, base_price)
-                    inventory_value += (current_price * quantity)
-
-        # Total net worth
-        total_net_worth = wallet_cash + inventory_value
-
-        # 3. Determine custom rank title based on total net worth
-        if total_net_worth >= 1_000_000:
-            status = "🐋 Market Whale"
-        elif total_net_worth >= 100_000:
-            status = "Business Mogul"
-        elif total_net_worth >= 10_000:
-            status = "Experienced Angler"
-        else:
-            status = "Hobbyist Fisherman"
-
-        # 4. Build the dynamic embed
+        portfolio = economy_engine.calculate_portfolio(wallet_cash, user_inv, market_prices)
+        
         embed = discord.Embed(
             title="🎲 Live Financial Portfolio",
             description=f"Showing asset distribution for **{interaction.user.name}**",
             color=discord.Color.gold()
         )
         
-        embed.add_field(name="💵 Liquid Cash", value=f"`${wallet_cash:,}`", inline=True)
-        embed.add_field(name="🪣 Inventory Value", value=f"`${inventory_value:,}`", inline=True)
-        embed.add_field(name="📊 Total Net Worth", value=f"**`${total_net_worth:,}`**", inline=False)
-        
-        embed.set_footer(text=f"Financial Standing: {status}")
+        embed.add_field(name="💵 Liquid Cash", value=f"`${portfolio['wallet_cash']:,}`", inline=True)
+        embed.add_field(name="🪣 Inventory Value", value=f"`${portfolio['inventory_value']:,}`", inline=True)
+        embed.add_field(name="📊 Total Net Worth", value=f"**`${portfolio['total_net_worth']:,}`**", inline=False)
+        embed.set_footer(text=f"Financial Standing: {portfolio['status']}")
         
         await interaction.followup.send(embed=embed)
 
-
     @app_commands.command(name="chances", description="View your exact personalized fishing drop rates!")
     async def view_chances(self, interaction: discord.Interaction):
-        # 🛡️ Defer the response instantly
         await interaction.response.defer()
-        
         user_id = str(interaction.user.id)
         
-        # 1. Fetch Karma from the database
         raw_karma = dict(self.db.get_player_karma(user_id))
+        has_mod_app = self.db.get_item_count(user_id, "♻️ Discord Mod Application") > 0
+        has_bf_repellent = self.db.get_item_count(user_id, "🧢 The \"I Have a Boyfriend\" Repellent") > 0
         
-        # 2. Build the personalized dynamic weights
-        dynamic_weights = []
-        for i, tier in enumerate(FISH_TIERS):
-            base_weight = FISH_WEIGHTS[i]
-            points = raw_karma.get(tier, 0)
-            
-            # Math: Every 100 points = +1% to the base weight
-            luck_bonus_pct = points / 100.0 
-            adjusted_weight = base_weight * (1 + (luck_bonus_pct / 100.0))
-            
-            dynamic_weights.append(adjusted_weight)
-            
-        # 3. Calculate the total sums to figure out the true pie chart percentages
-        total_weight_sum = sum(dynamic_weights)
-        total_base_weight_sum = sum(FISH_WEIGHTS)
+        dynamic_weights = fishing_engine.calculate_dynamic_weights(raw_karma, has_mod_app, has_bf_repellent)
         
-        # 4. Build a beautiful presentation embed
         embed = discord.Embed(
             title="🎲 Your Personal Catch Chances",
             description="Here are your exact tier drop rates based on your current Karma!",
             color=discord.Color.gold()
         )
         
-        # 5. Loop through every tier to compare Base vs Personal chances
         for i, tier in enumerate(FISH_TIERS):
-            # Calculate the Tier probabilities (not specific fish, just the whole tier)
-            base_tier_probability = (FISH_WEIGHTS[i] / total_base_weight_sum) * 100
-            my_tier_probability = (dynamic_weights[i] / total_weight_sum) * 100
+            base_prob, my_prob = fishing_engine.calculate_catch_probabilities(tier, dynamic_weights)
             
-            # Create a visual trend indicator to show the "Pie Effect"
-            if my_tier_probability > base_tier_probability:
-                trend = "🟢 ↑" # Karma boosted this tier
-            elif my_tier_probability < base_tier_probability:
-                trend = "🔴 ↓" # Pie effect squeezed this tier
-            else:
-                trend = "⚪ =" # Untouched
+            # Revert from per-species to per-tier for the pie chart display
+            species_in_tier = len(FISH_DATA[tier]["species"])
+            base_tier_prob = base_prob * species_in_tier
+            my_tier_prob = my_prob * species_in_tier
+            
+            trend = "🟢 ↑" if my_tier_prob > base_tier_prob else "🔴 ↓" if my_tier_prob < base_tier_prob else "⚪ ="
                 
             embed.add_field(
                 name=tier,
-                value=(
-                    f"**Base:** `{base_tier_probability:.3f}%`\n"
-                    f"**Yours:** `{my_tier_probability:.3f}%` {trend}"
-                ),
+                value=f"**Base:** `{base_tier_prob:.3f}%`\n**Yours:** `{my_tier_prob:.3f}%` {trend}",
                 inline=True
             )
             
         embed.set_footer(text="Release more fish using /free to boost your rare chances!")
-        
         await interaction.followup.send(embed=embed)
 
     @app_commands.command(name="sell_all", description="Liquidate your entire inventory to the live market!")
     async def sell_all(self, interaction: discord.Interaction):
         await interaction.response.defer()
         user_id = str(interaction.user.id)
-        username = interaction.user.name
         
-        # 1. Fetch inventory and market prices
         user_inv = self.db.get_inventory(user_id)
         market_prices = dict(self.db.get_market_prices())
         
@@ -258,67 +157,107 @@ class FishingCommands(commands.Cog):
             await interaction.followup.send("🪣 Your inventory is already empty!")
             return
 
-        # Create a mapping to find a fish's tier
-        species_to_tier = {}
-        for tier_key, data in FISH_DATA.items():
-            for species in data["species"]:
-                species_to_tier[species] = tier_key
-
-        total_payout = 0
-        total_fish_sold = 0
-        tier_drops = {} # Tracks total price drop per tier
+        has_tax_evasion = self.db.get_item_count(user_id, "📄 Tax Evasion Manual") > 0
+        has_short_squeeze = self.db.get_buff(user_id, "short_squeeze") is not None
         
-        # 2. Calculate payout and collect market drop amounts
-        for fish_name, quantity in user_inv:
-            if quantity > 0:
-                tier = species_to_tier.get(fish_name)
-                if not tier:
-                    continue 
-
-                base_price = FISH_DATA[tier]["value"]
-                current_price = market_prices.get(tier, base_price)
-                
-                total_payout += (current_price * quantity)
-                total_fish_sold += quantity
-                
-                # Drop price by 0.5% of base value per single fish dumped
-                price_drop = int(quantity * (base_price * 0.005))
-                tier_drops[tier] = tier_drops.get(tier, 0) + price_drop
-                
-        if total_fish_sold == 0:
+        from engines import market_engine
+        result = market_engine.calculate_sell_all_impact(user_inv, market_prices, has_tax_evasion, has_short_squeeze)
+        
+        if result["total_fish_sold"] == 0:
             await interaction.followup.send("🪣 You don't have any fish to sell!")
             return
-
-        # 3. Pass tier_drops directly into the upgraded database method!
-        self.db.sell_all_fish_db(user_id, username, total_payout, tier_drops, market_prices)
+            
+        if has_short_squeeze:
+            self.db.clear_buff(user_id, "short_squeeze")
+            
+        self.db.update_player_cash(user_id, result["total_payout"], interaction.user.name)
+        self.db.clear_inventory(user_id)
         
-        # 4. Show market impact breakdown in the receipt
-        impacted_tiers_text = []
-        for tier, drop_amount in tier_drops.items():
-            if drop_amount > 0:
-                base_price = FISH_DATA[tier]["value"]
-                min_price = int(base_price * 0.4) # 40% floor constraint
-                old_price = market_prices.get(tier, base_price)
-                new_price = max(min_price, old_price - drop_amount)
-                
-                actual_drop = old_price - new_price
-                if actual_drop > 0:
-                    impacted_tiers_text.append(f"**{tier}**: -${actual_drop:,}")
+        if result["sanitized_drops"]:
+            new_prices = {}
+            for tier, drop in result["sanitized_drops"].items():
+                old_price = market_prices.get(tier, FISH_DATA[tier]["value"])
+                new_price = max(0, old_price - drop)
+                new_prices[tier] = new_price
+            self.db.update_market_prices_bulk(new_prices)
 
-        # 5. Build dynamic receipt
         embed = discord.Embed(
             title="💰 Massive Payout!",
-            description=f"You dumped **{total_fish_sold:,}** fish onto the market!",
+            description=f"You dumped **{result['total_fish_sold']:,}** fish onto the market!",
             color=discord.Color.green()
         )
-        embed.add_field(name="Total Cash Earned", value=f"`${total_payout:,}`", inline=False)
+        embed.add_field(name="Total Cash Earned", value=f"`${result['total_payout']:,}`", inline=False)
         
-        if impacted_tiers_text:
-            embed.add_field(name="📉 Market Damage Caused", value="\n".join(impacted_tiers_text), inline=False)
+        if result["impacted_tiers_text"]:
+            embed.add_field(name="📉 Market Damage Caused", value="\n".join(result["impacted_tiers_text"]), inline=False)
+        elif has_tax_evasion:
+            embed.add_field(name="💼 Offshore Accounts", value="Your Tax Evasion Manual prevented the market from crashing!", inline=False)
             
         embed.set_footer(text="Check your new balance with /balance")
         await interaction.followup.send(embed=embed)
 
+    @app_commands.command(name="items", description="Inspect all the unhinged items coming to the game!")
+    async def items(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        from constants import ITEM_CATALOG
+        
+        embed = discord.Embed(
+            title="💎 THE BLACK MARKET EXCLUSIVE",
+            description="Welcome to the underground. Here is the catalog of highly illegal, economy-ruining assets.\n", 
+            color=discord.Color.purple()
+        )
+        embed.set_author(name=f"Access Granted: {interaction.user.name}", icon_url=interaction.user.display_avatar.url)
+        
+        for category, items in ITEM_CATALOG.items():
+            field_text = ""
+            for item_name, details in items.items():
+                field_text += f"**{item_name}** `[{details['type']}]`\n> *{details['desc']}*\n\n"
+            embed.add_field(name=f"{category.upper()}", value=field_text, inline=False)
+
+        embed.set_footer(text="STATUS: SHOP SYSTEMS CURRENTLY OFFLINE")
+        await interaction.followup.send(embed=embed)
+
+    @app_commands.command(name="give_item", description="[ADMIN] Spawn a Black Market item for testing.")
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.choices(item_name=ITEM_CHOICES)
+    async def give_item(self, interaction: discord.Interaction, target: discord.Member, item_name: Choice[str], quantity: int = 1):
+        user_id = str(target.id)
+        self.db.add_item(user_id, item_name.value, quantity)
+        await interaction.response.send_message(f"✅ Successfully spawned **{quantity}x {item_name.value}** into {target.mention}'s inventory.", ephemeral=True)
+
+    @app_commands.command(name="use", description="Use a consumable Black Market item!")
+    @app_commands.choices(item_name=ITEM_CHOICES)
+    async def use_item(self, interaction: discord.Interaction, item_name: Choice[str]):
+        user_id = str(interaction.user.id)
+        actual_item_name = item_name.value 
+        
+        if not self.db.consume_item(user_id, actual_item_name):
+            await interaction.response.send_message(f"❌ You don't have **{actual_item_name}** in your inventory, bozo.", ephemeral=True)
+            return
+
+        if actual_item_name == "🍼 Copium Inhaler":
+            self.db.set_buff(user_id, "copium_active", "1")
+            await interaction.response.send_message("🍼 *huffff* You ripped the Copium Inhaler! Your next `/fish` has a massively boosted chance for `God ✨` tier.")
+
+        elif actual_item_name == "📱 Bogdanoff’s Burner Phone":
+            self.db.set_buff(user_id, "short_squeeze", "1")
+            await interaction.response.send_message("📱 *\"Dump eet.\"* Your next `/sell_all` will grant +20% bonus cash!")
+            
+        elif actual_item_name == "🔋 Throw a Car Battery in the Ocean":
+            current_karma = self.db.get_player_karma(user_id)
+            result = item_engine.execute_car_battery(current_karma)
+            
+            self.db.add_fish_bulk(user_id, result["caught_fishes"])
+            self.db.deduct_karma_points(user_id, result["karma_deductions"])
+
+            await interaction.response.send_message(
+                f"🔋 *BZZZZZT* You hurled the car battery into the sea! The water boiled and 15 fish floated to the surface.\n\n"
+                f"🎣 **Loot:** {result['catch_text']}\n"
+                f"📉 **Penalty:** You lost {result['karma_lost']} Karma. The ecosystem absolutely hates you."
+            )
+        else:
+            self.db.add_item(user_id, actual_item_name, 1)
+            await interaction.response.send_message(f"You can't actively `/use` the **{actual_item_name}**. It is a passive item.", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(FishingCommands(bot))
