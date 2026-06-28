@@ -117,10 +117,20 @@ class FishingCommands(commands.Cog):
             description=f"Showing asset distribution for **{interaction.user.name}**",
             color=discord.Color.gold()
         )
-        
-        embed.add_field(name="💵 Liquid Cash", value=f"`${portfolio['wallet_cash']:,}`", inline=True)
-        embed.add_field(name="🪣 Inventory Value", value=f"`${portfolio['inventory_value']:,}`", inline=True)
-        embed.add_field(name="📊 Total Net Worth", value=f"**`${portfolio['total_net_worth']:,}`**", inline=False)
+
+        #FIX FOR HUGE NUMBERS TO DISPLAY CORRECLY
+        if portfolio['wallet_cash'] < 1e15:
+            embed.add_field(name="💵 Liquid Cash", value=f"`${portfolio['wallet_cash']:,.2f}`", inline=True)
+        else:
+            embed.add_field(name="💵 Liquid Cash", value=f"`${portfolio['wallet_cash']:.2e}`", inline=True)
+        if portfolio['inventory_value'] < 1e15:
+            embed.add_field(name="🪣 Inventory Value", value=f"`${portfolio['inventory_value']:,.2f}`", inline=True)
+        else:
+            embed.add_field(name="🪣 Inventory Value", value=f"`${portfolio['inventory_value']:.2e}`", inline=True)
+        if portfolio['total_net_worth'] < 1e15:
+            embed.add_field(name="📊 Total Net Worth", value=f"**`${portfolio['total_net_worth']:,.2f}`**", inline=False)
+        else:
+            embed.add_field(name="📊 Total Net Worth", value=f"**`${portfolio['total_net_worth']:.2e}`**", inline=False)
         embed.set_footer(text=f"Financial Standing: {portfolio['status']}")
         
         await interaction.followup.send(embed=embed)

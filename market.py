@@ -32,7 +32,7 @@ class MarketCommands(commands.Cog):
             affected_tier = shock_event["tier"]
             
             if affected_tier in updated_prices:
-                shock_price = int(updated_prices[affected_tier] * shock_event["mult"])
+                shock_price = float(updated_prices[affected_tier]) * float(shock_event["mult"])
                 self.db.update_market_price(affected_tier, shock_price)
                 
                 channel_ids = self.db.get_all_news_channels()
@@ -71,9 +71,13 @@ class MarketCommands(commands.Cog):
         for tier, price in prices:
             base = FISH_DATA[tier]["value"]
             trend = "🟢 ↗️" if price > base else ("🔴 ↘️" if price < base else "⚪ ➡️")
+            
+            # Formatter layer supporting cosmic numbers and standard whole figures smoothly
+            price_display = f"{price:,.2f}" if price < 1e15 else f"{price:.4e}"
+            
             embed.add_field(
                 name=tier,
-                value=f"Current Price: **${price:,}**\nBase: `${base:,}`\nTrend: {trend}",
+                value=f"Current Price: **${price_display}**\nBase: `${base:,}`\nTrend: {trend}",
                 inline=True
             )
             
@@ -114,11 +118,15 @@ class MarketCommands(commands.Cog):
         self.db.update_market_price(chosen_tier, new_price)
         
         embed = discord.Embed(title="💰 Transaction Complete!", color=discord.Color.green())
+        payout_display = f"{total_payout:,.2f}" if total_payout < 1e15 else f"{total_payout:.4e}"
+        old_price_display = f"{current_unit_price:,.2f}" if current_unit_price < 1e15 else f"{current_unit_price:.4e}"
+        new_price_display = f"{new_price:,.2f}" if new_price < 1e15 else f"{new_price:.4e}"
+
         embed.description = (
-            f"You liquidated **x{total_fish_to_sell}** fish from the **{chosen_tier}** tier.\n"
-            f"💵 **Earned:** `+${total_payout:,}`\n\n"
+            f"You liquidated **x{total_fish_to_sell:,}** fish from the **{chosen_tier}** tier.\n"
+            f"💵 **Earned:** `+${payout_display}`\n\n"
             f"📉 **Market Impact:** The massive supply drop caused the value of {chosen_tier} "
-            f"to tumble from **${current_unit_price:,}** down to **${new_price:,}**!"
+            f"to tumble from **${old_price_display}** down to **${new_price_display}**!"
         )
         await interaction.followup.send(embed=embed)
 
@@ -203,11 +211,15 @@ class MarketCommands(commands.Cog):
         self.db.update_market_price(chosen_tier, new_price)
 
         embed = discord.Embed(title="🛒 Market Purchase Complete!", color=discord.Color.gold())
+        cost_display = f"{total_cost:,.2f}" if total_cost < 1e15 else f"{total_cost:.4e}"
+        old_price_display = f"{current_unit_price:,.2f}" if current_unit_price < 1e15 else f"{current_unit_price:.4e}"
+        new_price_display = f"{new_price:,.2f}" if new_price < 1e15 else f"{new_price:.4e}"
+
         embed.description = (
-            f"You bought **x{quantity}** fish from the **{chosen_tier}** tier.\n"
-            f"💸 **Total Spent:** `-${total_cost:,}`\n\n"
+            f"You bought **x{quantity:,}** fish from the **{chosen_tier}** tier.\n"
+            f"💸 **Total Spent:** `-${cost_display}`\n\n"
             f"📈 **Market Impact:** Your massive order caused the value of {chosen_tier} "
-            f"to skyrocket from **${current_unit_price:,}** up to **${new_price:,}**!"
+            f"to skyrocket from **${old_price_display}** up to **${new_price_display}**!"
         )
         
         await interaction.followup.send(embed=embed)

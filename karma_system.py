@@ -27,27 +27,32 @@ class KarmaSystem(commands.Cog):
                 tier = FISH_TO_TIER[fish_name]
                 base_val = FISH_DATA[tier]["value"]
                 
-                # Math: Calculate karma per fish. Minimum 1 point.
-                karma_per_fish = max(1, int(base_val / 10))
-                total_karma_for_species = karma_per_fish * quantity
+                # Math: Use floats to prevent overflow during calculations
+                karma_per_fish = max(1.0, float(base_val) / 10.0)
+                total_karma_for_species = karma_per_fish * float(quantity)
                 
-                karma_to_add[tier] = karma_to_add.get(tier, 0) + total_karma_for_species
-                total_fish_freed += quantity
+                karma_to_add[tier] = karma_to_add.get(tier, 0.0) + total_karma_for_species
+                total_fish_freed += float(quantity)
 
         db_karma_payload = [(tier, points) for tier, points in karma_to_add.items()]
         
         self.db.clear_inventory(user_id)
         self.db.add_karma_points(user_id, db_karma_payload)
 
+        # Scientific notation check for cosmic numbers freed
+        freed_display = f"{total_fish_freed:,.0f}" if total_fish_freed < 1e15 else f"{total_fish_freed:.4e}"
+
         embed = discord.Embed(
             title="🌊 The Ocean Thanks You!", 
-            description=f"You opened your buckets and released **{total_fish_freed}** fish back into the wild!", 
+            description=f"You opened your buckets and released **{freed_display}** fish back into the wild!", 
             color=discord.Color.blue()
         )
         
         breakdown = ""
         for tier, points in karma_to_add.items():
-            breakdown += f"• **{tier}**: `+{points:,} Karma` \n"
+            # Secure display format swap so giant float numbers don't crash the string engine
+            points_display = f"{points:,.0f}" if points < 1e15 else f"{points:.4e}"
+            breakdown += f"• **{tier}**: `+{points_display} Karma` \n"
             
         embed.add_field(name="✨ Karma Earned Breakdown", value=breakdown, inline=False)
         embed.set_footer(text="Check your upgraded bonus luck status anytime using /karma")

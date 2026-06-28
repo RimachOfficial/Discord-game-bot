@@ -98,16 +98,25 @@ class DatabaseManager:
         self.conn.commit()
 
     def update_player_cash(self, user_id: str, amount: int, username: str = None):
+        # 1. Fetch current balance first and force convert it to a float
+        self.cursor.execute("SELECT cash FROM players WHERE user_id = ?", (user_id,))
+        result = self.cursor.fetchone()
+        current_cash = float(result[0]) if (result and result[0] is not None) else 0.0
+
+        # 2. Add the new amount using floating point math
+        new_cash = current_cash + float(amount)
+
+        # 3. Save the float back into the database
         if username:
             self.cursor.execute('''
                 INSERT INTO players (user_id, username, cash) VALUES (?, ?, ?)
-                ON CONFLICT(user_id) DO UPDATE SET cash = cash + ?, username = excluded.username
-            ''', (user_id, username, amount, amount))
+                ON CONFLICT(user_id) DO UPDATE SET cash = ?, username = excluded.username
+            ''', (user_id, username, new_cash, new_cash))
         else:
             self.cursor.execute('''
                 INSERT INTO players (user_id, cash) VALUES (?, ?)
-                ON CONFLICT(user_id) DO UPDATE SET cash = cash + ?
-            ''', (user_id, amount, amount))
+                ON CONFLICT(user_id) DO UPDATE SET cash = ?
+            ''', (user_id, new_cash, new_cash))
         self.conn.commit()
 
     def get_top_players(self, limit: int = 5):
@@ -168,13 +177,27 @@ class DatabaseManager:
         self.cursor.execute("SELECT fish_tier, karma_points FROM karma WHERE user_id = ?", (user_id,))
         return self.cursor.fetchall()
 
-    def add_karma_points(self, user_id: str, karma_updates: list[tuple[str, int]]):
+    def add_karma_points(self, user_id: str, karma_updates: list):
+        # 1. Pull current user karma into a python dictionary of floats
+        self.cursor.execute("SELECT fish_tier, karma_points FROM karma WHERE user_id = ?", (user_id,))
+        existing_rows = self.cursor.fetchall()
+        current_karma = {row[0]: float(row[1]) for row in existing_rows}
+
+        # 2. Accumulate adjustments in memory
+        for tier, points in karma_updates:
+            current_karma[tier] = current_karma.get(tier, 0.0) + float(points)
+
+        # 3. Save the results cleanly back into SQLite
+        prepare_data = [
+            (user_id, tier, total_points, total_points) 
+            for tier, total_points in current_karma.items()
+        ]
+
         self.cursor.executemany('''
-            INSERT INTO karma (user_id, fish_tier, karma_points)
-            VALUES (?, ?, ?)
-            ON CONFLICT(user_id, fish_tier)
-            DO UPDATE SET karma_points = karma_points + excluded.karma_points
-        ''', [(user_id, tier, points) for tier, points in karma_updates])
+            INSERT INTO karma (user_id, fish_tier, karma_points) VALUES (?, ?, ?)
+            ON CONFLICT(user_id, fish_tier) DO UPDATE SET karma_points = ?
+        ''', prepare_data)
+        
         self.conn.commit()
 
     def deduct_karma_points(self, user_id: str, deductions: list[tuple[str, int]]):
@@ -185,10 +208,11 @@ class DatabaseManager:
             )
         self.conn.commit()
 
-    def get_player_balance(self, user_id: str) -> int:
+    def get_player_balance(self, user_id: str) -> float:
         self.cursor.execute("SELECT cash FROM players WHERE user_id = ?", (user_id,))
         row = self.cursor.fetchone()
-        return row[0] if row else 0
+        # Force the return value to be a float so it can handle cosmic amounts safely
+        return float(row[0]) if (row and row[0] is not None) else 0.0
 
     def get_item_count(self, user_id: str, item_name: str) -> int:
         self.cursor.execute("SELECT quantity FROM player_items WHERE user_id = ? AND item_name = ?", (user_id, item_name))

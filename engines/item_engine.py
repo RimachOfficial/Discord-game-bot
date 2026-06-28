@@ -1,30 +1,46 @@
 import random
+from engines import fishing_engine
 from constants import FISH_TIERS, FISH_WEIGHTS, FISH_DATA
 
-def execute_car_battery(current_karma: list[tuple[str, int]]) -> dict:
+def execute_car_battery(current_karma: list[tuple[str, float]]) -> dict:
     """
-    Executes the 'Throw a Car Battery in the Ocean' logic.
+    Executes the 'Throw a Car Battery in the Ocean' logic using Karma weights.
     Returns caught fish and karma deductions to pass to the DB.
     """
-    # 1. Pull 15 random fish using base weights
+    # Convert the user's current database karma list into a raw dictionary for the engine
+    raw_karma = dict(current_karma)
+    
     caught_fishes = []
     fish_counts = {}
     
+    # Loop 15 times using your actual weighted engine logic
     for _ in range(15):
-        caught_tier = random.choices(FISH_TIERS, weights=FISH_WEIGHTS, k=1)[0]
-        fish_name = random.choice(FISH_DATA[caught_tier]["species"])
+        # 🌟 CRITICAL FIX: Use the actual engine roll that considers Karma luck
+        result = fishing_engine.roll_fish(
+            raw_karma=raw_karma, 
+            has_mod_app=False, 
+            has_bf_repellent=False, 
+            has_copium=False, 
+            has_gamer_girl=False
+        )
+        
+        caught_tier = result["tier"]
+        fish_name = result["fish_name"]
+        
         caught_fishes.append({"name": fish_name, "tier": caught_tier})
         fish_counts[fish_name] = fish_counts.get(fish_name, 0) + 1
         
     catch_text = ", ".join([f"**{count}x** {name}" for name, count in fish_counts.items()])
     
-    # 2. Calculate Karma deductions (total 50 points lost)
-    points_to_lose = 50
+    # 2. Calculate Karma deductions (Total 50 points lost, handling floats safely)
+    points_to_lose = 50.0
     deductions = []
     
     for tier, points in current_karma:
-        if points_to_lose <= 0: break
-        if points > 0:
+        points = float(points)
+        if points_to_lose <= 0.0: 
+            break
+        if points > 0.0:
             deduct = min(points, points_to_lose)
             deductions.append((tier, deduct))
             points_to_lose -= deduct
@@ -33,7 +49,7 @@ def execute_car_battery(current_karma: list[tuple[str, int]]) -> dict:
         "caught_fishes": caught_fishes,
         "catch_text": catch_text,
         "karma_deductions": deductions,
-        "karma_lost": 50 - points_to_lose
+        "karma_lost": 50.0 - points_to_lose
     }
 
 def calculate_item_purchase(item_name: str, player_cash: int, owned_count: int) -> dict:
