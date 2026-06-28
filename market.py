@@ -91,6 +91,13 @@ class MarketCommands(commands.Cog):
         user_id = str(interaction.user.id)
         chosen_tier = tier.value
         
+        # --- NEW: Check for Black Market Buffs ---
+        has_tax_evasion = (
+            self.db.get_item_count(user_id, "📄 Tax Evasion Manual") > 0
+            and self.db.get_buff(user_id, "item_disabled:📄 Tax Evasion Manual") is None
+        )
+        has_short_squeeze = self.db.get_buff(user_id, "short_squeeze") is not None
+
         prices = dict(self.db.get_market_prices())
         current_unit_price = prices.get(chosen_tier, FISH_DATA[chosen_tier]["value"])
         
@@ -109,37 +116,53 @@ class MarketCommands(commands.Cog):
             await interaction.followup.send(f"🪣 You don't have any fish from the **{chosen_tier}** tier to sell!")
             return
             
-        # Execute Domain Logic
-        total_payout, price_drop, new_price = market_engine.calculate_sell_impact(chosen_tier, total_fish_to_sell, current_unit_price)
+        # Execute Domain Logic (You will need to pass the buffs here too!)
+        total_payout, actual_drop, new_price = market_engine.calculate_sell_impact(
+            chosen_tier, total_fish_to_sell, current_unit_price, has_tax_evasion, has_short_squeeze
+        )
         
         # Save to DB
         self.db.update_player_cash(user_id, total_payout, interaction.user.name)
         self.db.clear_specific_fish(user_id, fish_to_reset)
-        self.db.update_market_price(chosen_tier, new_price)
+        
+        # Consume the Burner Phone charge if used
+        if has_short_squeeze:
+            self.db.clear_buff(user_id, "short_squeeze")
+        
+        # --- NEW: Respect Tax Evasion ---
+        if not has_tax_evasion:
+            self.db.update_market_price(chosen_tier, new_price)
         
         embed = discord.Embed(title="💰 Transaction Complete!", color=discord.Color.green())
         payout_display = f"{total_payout:,.2f}" if total_payout < 1e15 else f"{total_payout:.4e}"
         old_price_display = f"{current_unit_price:,.2f}" if current_unit_price < 1e15 else f"{current_unit_price:.4e}"
         new_price_display = f"{new_price:,.2f}" if new_price < 1e15 else f"{new_price:.4e}"
 
-        embed.description = (
-            f"You liquidated **x{total_fish_to_sell:,}** fish from the **{chosen_tier}** tier.\n"
-            f"💵 **Earned:** `+${payout_display}`\n\n"
-            f"📉 **Market Impact:** The massive supply drop caused the value of {chosen_tier} "
-            f"to tumble from **${old_price_display}** down to **${new_price_display}**!"
-        )
+        embed.description = f"You liquidated **x{total_fish_to_sell:,}** fish from the **{chosen_tier}** tier.\n💵 **Earned:** `+${payout_display}`\n\n"
+        
+        if has_tax_evasion:
+            embed.description += "💼 **Offshore Accounts:** Your Tax Evasion Manual prevented any market impact!"
+        elif has_short_squeeze:
+             embed.description += f"📱 **BOGDANOFF ACTIVATE:** The malicious dump absolutely obliterated the value of {chosen_tier} down to **${new_price_display}**!"
+        else:
+            embed.description += f"📉 **Market Impact:** The massive supply drop caused the value of {chosen_tier} to tumble from **${old_price_display}** down to **${new_price_display}**!"
+            
         await interaction.followup.send(embed=embed)
 
-    @app_commands.command(name="setnews", description="Set the channel for market breaking news! (Admins only)")
-    @app_commands.checks.has_permissions(manage_guild=True)
-    async def setnews(self, interaction: discord.Interaction, channel: discord.TextChannel):
-        self.db.set_news_channel(str(interaction.guild_id), str(channel.id))
-        embed = discord.Embed(
-            title="📰 News Channel Set!", 
-            description=f"Market crashes and spikes will now be broadcasted in {channel.mention}.",
-            color=discord.Color.green()
-        )
-        await interaction.response.send_message(embed=embed)
+    @app_commands.command(name="setnews", description="Set the channel for breaking market news.")
+    async def setnews(self, interaction: discord.Interaction):
+        # 🌟 THIS MUST BE THE VERY FIRST LINE:
+        await interaction.response.defer() 
+        
+        # Now we grab the IDs
+        guild_id = str(interaction.guild.id)
+        channel_id = str(interaction.channel_id)
+        
+        # Now we hit your flawless database function
+        self.db.set_news_channel(guild_id, channel_id)
+        
+        # Finally, we use followup.send instead of response.send_message
+        await interaction.followup.send(f"✅ News channel successfully set to <#{channel_id}>!")
 
     @app_commands.command(name="buy", description="Buy a fish directly from the market and drive its value up!")
     @app_commands.choices(tier=[app_commands.Choice(name=t, value=t) for t in FISH_DATA.keys()])
@@ -218,9 +241,18 @@ class MarketCommands(commands.Cog):
         embed.description = (
             f"You bought **x{quantity:,}** fish from the **{chosen_tier}** tier.\n"
             f"💸 **Total Spent:** `-${cost_display}`\n\n"
-            f"📈 **Market Impact:** Your massive order caused the value of {chosen_tier} "
-            f"to skyrocket from **${old_price_display}** up to **${new_price_display}**!"
         )
+        
+        # --- NEW: Custom text if they used the Credit Card ---
+        if has_credit_card:
+            embed.description += "💳 **Mommy's Credit Card:** Your VIP banking completely bypassed the market slippage! The price didn't budge an inch."
+        else:
+            embed.description += (
+                f"📈 **Market Impact:** Your massive order caused the value of {chosen_tier} "
+                f"to skyrocket from **${old_price_display}** up to **${new_price_display}**!"
+            )
+            
+        await interaction.followup.send(embed=embed)
         
         await interaction.followup.send(embed=embed)
 

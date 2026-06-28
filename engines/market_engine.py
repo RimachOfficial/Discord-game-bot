@@ -43,45 +43,64 @@ def generate_market_shock() -> dict | None:
     return None
 
 
-def calculate_sell_impact(tier: str, quantity_sold: float, current_unit_price: float) -> tuple[float, float, float]:
-    """Calculates payout and strictly safe price drops based on quantity sold."""
+def calculate_sell_impact(tier: str, quantity_sold: float, current_unit_price: float, has_tax_evasion: bool = False, has_short_squeeze: bool = False) -> tuple[float, float, float]:
+    """Calculates payout with slippage and safely applies black market modifiers."""
     quantity_sold = float(quantity_sold)
     current_unit_price = float(current_unit_price)
     base_price = float(FISH_DATA[tier]["value"])
-    
-    total_payout = quantity_sold * current_unit_price
-    
-    # Drop by 0.005% of BASE value per unit sold
-    price_drop = quantity_sold * (base_price * 0.005)
-    
     hard_floor = base_price * weight_floor
-    new_price = max(hard_floor, current_unit_price - price_drop)
-    actual_drop = current_unit_price - new_price
     
-    return total_payout, actual_drop, new_price
+    # 1. Calculate NORMAL drop for the player's payout
+    normal_price_drop = quantity_sold * (base_price * 0.005)
+    normal_new_price = max(hard_floor, current_unit_price - normal_price_drop)
+    
+    # 🌟 ANTI-EXPLOIT: Pay them the average value of the NORMAL crash
+    average_unit_price = (current_unit_price + normal_new_price) / 2.0
+    total_payout = average_unit_price * quantity_sold
+    
+    # 2. Calculate MALICIOUS drop for the global market
+    if has_short_squeeze:
+        market_price_drop = normal_price_drop * 3.0
+    else:
+        market_price_drop = normal_price_drop
+        
+    market_new_price = max(hard_floor, current_unit_price - market_price_drop)
+    
+    # 3. Handle Tax Evasion
+    if has_tax_evasion:
+        actual_drop = 0.0
+        final_market_price = current_unit_price # The price doesn't change!
+    else:
+        actual_drop = current_unit_price - market_new_price
+        final_market_price = market_new_price
+    
+    return total_payout, actual_drop, final_market_price
 
 
 def calculate_buy_impact(tier: str, quantity_bought: float, current_unit_price: float, player_cash: float, has_credit_card: bool = False) -> dict:
-    """Calculates cost, price bumps, and check affordability."""
+    """Calculates cost using slippage (average price), price bumps, and checks affordability."""
     quantity_bought = float(quantity_bought)
     current_unit_price = float(current_unit_price)
     player_cash = float(player_cash)
     base_price = float(FISH_DATA[tier]["value"])
     
-    total_cost = current_unit_price * quantity_bought
-    
-    if player_cash < total_cost:
-        return {"success": False, "shortfall": total_cost - player_cash}
-        
+    # Calculate how much the market will react BEFORE charging the player
     if has_credit_card:
         price_bump = 0.0
     else:
-        # Surge by 0.5% of BASE value per unit bought
         price_bump = quantity_bought * (base_price * 0.005)
     
     max_allowed_price = base_price * weight_ceiling
     new_price = min(max_allowed_price, current_unit_price + price_bump)
     actual_bump = new_price - current_unit_price
+    
+    # 🌟 ANTI-EXPLOIT: Calculate the average slippage price
+    average_unit_price = (current_unit_price + new_price) / 2.0
+    total_cost = average_unit_price * quantity_bought
+    
+    # Now check if they can afford the dynamic cost
+    if player_cash < total_cost:
+        return {"success": False, "shortfall": total_cost - player_cash}
     
     return {
         "success": True, 
@@ -93,51 +112,57 @@ def calculate_buy_impact(tier: str, quantity_bought: float, current_unit_price: 
 
 def calculate_sell_all_impact(user_inv: list[tuple[str, float]], market_prices: dict[str, float], has_tax_evasion: bool, has_short_squeeze: bool) -> dict:
     from constants import FISH_TO_TIER, FISH_DATA
+    import math
     
     total_payout = 0.0
     total_fish_sold = 0.0
-    tier_drops = {}
     
+    # 🌟 STEP 1: Aggregate all individual fish species into their primary Tiers first
+    tier_quantities = {}
     for fish_name, quantity in user_inv:
         quantity = float(quantity)
         if quantity > 0:
             tier = FISH_TO_TIER.get(fish_name)
-            if not tier: continue 
-            
-            base_price = float(FISH_DATA[tier]["value"])
-            current_price = float(market_prices.get(tier, base_price))
-            
-            total_payout += (current_price * quantity)
-            total_fish_sold += quantity
-            
-            if not has_tax_evasion:
-                price_drop = quantity * (base_price * 0.005)
-                if has_short_squeeze:
-                    price_drop *= 3.0  # Force a massive crash on the sold tiers
-                tier_drops[tier] = tier_drops.get(tier, 0.0) + price_drop
+            if tier:
+                tier_quantities[tier] = tier_quantities.get(tier, 0.0) + quantity
 
     sanitized_drops = {}
     impacted_tiers_text = []
 
-    for tier, raw_drop in tier_drops.items():
+    # 🌟 STEP 2: Calculate the slippage for the entire combined tier at once!
+    for tier, total_quantity in tier_quantities.items():
         base_price = float(FISH_DATA[tier]["value"])
-        old_price = float(market_prices.get(tier, base_price))
-        
+        current_price = float(market_prices.get(tier, base_price))
         hard_floor = base_price * weight_floor
-        new_price = max(hard_floor, old_price - raw_drop)
-        actual_drop = old_price - new_price
         
-        if actual_drop > 0:
-            sanitized_drops[tier] = actual_drop
+        # 1. Calculate NORMAL drop for the player's payout
+        normal_price_drop = total_quantity * (base_price * 0.005)
+        normal_new_price = max(hard_floor, current_price - normal_price_drop)
+        
+        # Slippage Payout (Average price across the NORMAL crash)
+        average_unit_price = (current_price + normal_new_price) / 2.0
+        total_payout += (average_unit_price * total_quantity)
+        total_fish_sold += total_quantity
+        
+        # 2. Calculate MALICIOUS drop for the global market
+        if has_short_squeeze:
+            market_price_drop = normal_price_drop * 3.0
+        else:
+            market_price_drop = normal_price_drop
             
-            # Safe Float Representation Formatter Switch
-            drop_display = f"{actual_drop:,.0f}" if actual_drop < 1e15 else f"{actual_drop:.4e}"
-            
-            # Check if it hit the exact floor layout boundary
-            if math.isclose(new_price, hard_floor) or new_price <= hard_floor:
-                impacted_tiers_text.append(f"**{tier}**: -${drop_display} *(📉 CRASHED TO FLOOR!)*")
-            else:
-                impacted_tiers_text.append(f"**{tier}**: -${drop_display}")
+        market_new_price = max(hard_floor, current_price - market_price_drop)
+        
+        # 3. Record the damage for the market update
+        if not has_tax_evasion:
+            actual_drop = current_price - market_new_price
+            if actual_drop > 0:
+                sanitized_drops[tier] = actual_drop
+                drop_display = f"{actual_drop:,.2f}" if actual_drop < 1e15 else f"{actual_drop:.4e}"
+                
+                if math.isclose(market_new_price, hard_floor) or market_new_price <= hard_floor:
+                    impacted_tiers_text.append(f"**{tier}**: -${drop_display} *(📉 CRASHED TO FLOOR!)*")
+                else:
+                    impacted_tiers_text.append(f"**{tier}**: -${drop_display}")
 
     return {
         "total_payout": total_payout,

@@ -4,18 +4,27 @@ from constants import FISH_TIERS, FISH_WEIGHTS, FISH_DATA
 
 def execute_car_battery(current_karma: list[tuple[str, float]]) -> dict:
     """
-    Executes the 'Throw a Car Battery in the Ocean' logic using Karma weights.
-    Returns caught fish and karma deductions to pass to the DB.
+    Executes the 'Throw a Car Battery in the Ocean' logic.
+    Requires at least 50 total karma across all tiers to use.
     """
-    # Convert the user's current database karma list into a raw dictionary for the engine
+    # 1. Safely parse the DB data into a dictionary once
     raw_karma = dict(current_karma)
     
+    # 2. Sum up the karma using the safe dictionary values
+    total_available_karma = sum(float(points) for points in raw_karma.values())
+    
+    # 🛑 ANTI-EXPLOIT: Check if they have enough karma
+    if total_available_karma < 50.0:
+        return {
+            "success": False, 
+            "msg": "❌ The ocean is already dead. You don't even have 50 Karma left to lose!"
+        }
+
     caught_fishes = []
     fish_counts = {}
     
-    # Loop 15 times using your actual weighted engine logic
+    # 3. Roll the 15 fish
     for _ in range(15):
-        # 🌟 CRITICAL FIX: Use the actual engine roll that considers Karma luck
         result = fishing_engine.roll_fish(
             raw_karma=raw_karma, 
             has_mod_app=False, 
@@ -32,20 +41,22 @@ def execute_car_battery(current_karma: list[tuple[str, float]]) -> dict:
         
     catch_text = ", ".join([f"**{count}x** {name}" for name, count in fish_counts.items()])
     
-    # 2. Calculate Karma deductions (Total 50 points lost, handling floats safely)
+    # 4. Calculate the 50 point deduction using the safe dictionary items
     points_to_lose = 50.0
     deductions = []
     
-    for tier, points in current_karma:
+    for tier, points in raw_karma.items():
         points = float(points)
         if points_to_lose <= 0.0: 
             break
+            
         if points > 0.0:
             deduct = min(points, points_to_lose)
             deductions.append((tier, deduct))
             points_to_lose -= deduct
             
     return {
+        "success": True,
         "caught_fishes": caught_fishes,
         "catch_text": catch_text,
         "karma_deductions": deductions,

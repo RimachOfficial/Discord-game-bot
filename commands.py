@@ -288,6 +288,12 @@ class FishingCommands(commands.Cog):
             current_karma = self.db.get_player_karma(user_id)
             result = item_engine.execute_car_battery(current_karma)
             
+            if not result["success"]:
+                # Refund the item because they couldn't use it!
+                self.db.add_item(user_id, actual_item_name, 1)
+                await interaction.response.send_message(result["msg"], ephemeral=True)
+                return
+
             self.db.add_fish_bulk(user_id, result["caught_fishes"])
             self.db.deduct_karma_points(user_id, result["karma_deductions"])
 
@@ -296,9 +302,6 @@ class FishingCommands(commands.Cog):
                 f"🎣 **Loot:** {result['catch_text']}\n"
                 f"📉 **Penalty:** You lost {result['karma_lost']} Karma. The ecosystem absolutely hates you."
             )
-        else:
-            self.db.add_item(user_id, actual_item_name, 1)
-            await interaction.response.send_message(f"You can't actively `/use` the **{actual_item_name}**. It is a passive item.", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(FishingCommands(bot))
