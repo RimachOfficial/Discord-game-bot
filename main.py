@@ -7,9 +7,9 @@ import sys
 import io
 
 # Force Windows console to support emojis and complex unicode strings
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+#if sys.platform == "win32":
+#    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+#    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 
 # 1. Load the secret token

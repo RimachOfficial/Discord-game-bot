@@ -23,8 +23,8 @@ class FishingCommands(commands.Cog):
             and self.db.get_buff(user_id, "item_disabled:♻️ Discord Mod Application") is None
         )
         has_bf_repellent = (
-            self.db.get_item_count(user_id, '\ud83e\udde2 The "I Have a Boyfriend" Repellent') > 0
-            and self.db.get_buff(user_id, 'item_disabled:\ud83e\udde2 The "I Have a Boyfriend" Repellent') is None
+            self.db.get_item_count(user_id, '🧢 The "I Have a Boyfriend" Repellent') > 0
+            and self.db.get_buff(user_id, 'item_disabled:🧢 The "I Have a Boyfriend" Repellent') is None
         )
         has_copium = self.db.get_buff(user_id, "copium_active") is not None
         
