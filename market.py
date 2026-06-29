@@ -17,12 +17,34 @@ class MarketCommands(commands.Cog):
 
     @tasks.loop(minutes=minutes_of_update)
     async def update_prices(self):
+
+        channel_ids = self.db.get_all_news_channels()
+
         current_prices = self.db.get_market_prices()
         
         # 1. Normal Market Fluctuations
         new_prices = market_engine.calculate_market_fluctuations(current_prices)
         self.db.update_market_prices_bulk(new_prices)
+        print("🎲 Market loop ticked: Prices changed")
+        
+        embed = discord.Embed(
+                    title="📰PRICES UPDATE TICK📰", 
+                    description=f"{minutes_of_update} passed and market updated", 
+                    color=discord.Color.red()
+                )
+        
+        for cid in channel_ids:
+                    channel = self.bot.get_channel(int(cid))
+                    if channel:
+                        try:
+                            await channel.send(embed=embed)
+                            print(f"✅ Successfully sent update tick to channel ID: {cid}")
+                        except discord.Forbidden:
+                            print(f"❌ Failed to send update tick: Lacking permissions in channel ID: {cid}")
+                    else:
+                        print(f"⚠️ Channel ID {cid} could not be found by the bot cache.")
 
+        
         # 2. Market Shocks (Random News Events)
         shock_event = market_engine.generate_market_shock()
         if shock_event:
@@ -35,7 +57,6 @@ class MarketCommands(commands.Cog):
                 shock_price = float(updated_prices[affected_tier]) * float(shock_event["mult"])
                 self.db.update_market_price(affected_tier, shock_price)
                 
-                channel_ids = self.db.get_all_news_channels()
                 print(f"📡 Found {len(channel_ids)} registered news channel(s) in database.")
                 
                 embed = discord.Embed(
@@ -55,6 +76,8 @@ class MarketCommands(commands.Cog):
                             print(f"❌ Failed to send: Lacking permissions in channel ID: {cid}")
                     else:
                         print(f"⚠️ Channel ID {cid} could not be found by the bot cache.")
+
+
 
     @update_prices.before_loop
     async def before_update_prices(self):

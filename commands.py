@@ -67,13 +67,13 @@ class FishingCommands(commands.Cog):
             description=(
                 f"And reeled in a **{fish_name}**!\n\n"
                 f"✨ **Tier:** {tier}\n"
-                f"📊 **Base Chance:** `{result['base_catch_pct']:.3f}%`\n"
-                f"🎲 **Your Chance:** `{result['exact_catch_pct']:.3f}%`"
+                f"📊 **Base Chance:** `{result['base_catch_pct']:.2f}%`\n"
+                f"🎲 **Your Chance:** `{result['exact_catch_pct']:.2f}%`"
             ),
             color=discord.Color.teal()
         )
-        embed.add_field(name="💵 Live Market Price", value=f"`${current_market_price:,}` ({trend})", inline=True)
-        embed.add_field(name="🏛️ Base Value", value=f"`${base_price:,}`", inline=True)
+        embed.add_field(name="💵 Live Market Price", value=f"`${current_market_price:.2f}` ({trend})", inline=True)
+        embed.add_field(name="🏛️ Base Value", value=f"`${base_price:.2f}`", inline=True)
         embed.set_image(url=FISH_DATA[tier]["gif"])
         
         await interaction.followup.send(embed=embed)
@@ -88,7 +88,7 @@ class FishingCommands(commands.Cog):
             
         embed = discord.Embed(title="🏆 Wealthiest Fishermen 🏆", color=discord.Color.gold())
         for index, (name, wealth) in enumerate(top_players, start=1):
-            embed.add_field(name=f"#{index} {name}", value=f"💰 ${wealth:,}", inline=False)
+            embed.add_field(name=f"#{index} {name}", value=f"💰 ${wealth:.2f}", inline=False)
             
         await interaction.response.send_message(embed=embed)
 
@@ -220,10 +220,10 @@ class FishingCommands(commands.Cog):
 
         embed = discord.Embed(
             title="💰 Massive Payout!",
-            description=f"You dumped **{result['total_fish_sold']:,}** fish onto the market!",
+            description=f"You dumped **{result['total_fish_sold']:.2f}** fish onto the market!",
             color=discord.Color.green()
         )
-        embed.add_field(name="Total Cash Earned", value=f"`${result['total_payout']:,}`", inline=False)
+        embed.add_field(name="Total Cash Earned", value=f"`${result['total_payout']:.2f}`", inline=False)
         
         if result["impacted_tiers_text"]:
             embed.add_field(name="📉 Market Damage Caused", value="\n".join(result["impacted_tiers_text"]), inline=False)
