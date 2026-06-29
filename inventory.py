@@ -66,7 +66,7 @@ class InventoryCommands(commands.Cog):
         embed.description = (
             f"📈 **Live Market Worth:** **${total_market_value:.2f}**\n"
             f"🏛️ **Static Base Worth:** `${total_base_value:.2f}`\n"
-            f"{profit_loss_color} **Market Performance:** `{(total_market_value - total_base_value):+,}` compared to base values.\n"
+            f"{profit_loss_color} **Market Performance:** `{(total_market_value - total_base_value):+.2f}` compared to base values.\n"
         )
             
         from constants import ITEM_CATALOG
