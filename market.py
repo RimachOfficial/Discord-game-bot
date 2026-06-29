@@ -77,8 +77,6 @@ class MarketCommands(commands.Cog):
                     else:
                         print(f"⚠️ Channel ID {cid} could not be found by the bot cache.")
 
-
-
     @update_prices.before_loop
     async def before_update_prices(self):
         await self.bot.wait_until_ready()

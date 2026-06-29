@@ -11,7 +11,7 @@ class FishingCommands(commands.Cog):
         self.db = bot.db
     
     @app_commands.command(name="fish", description="Cast your line into the water!")
-    @app_commands.checks.cooldown(30, 30.0, key=lambda i: i.user.id)
+    @app_commands.checks.cooldown(10, 30.0, key=lambda i: i.user.id)
     async def fish(self, interaction: discord.Interaction):
         await interaction.response.defer()
         user_id = str(interaction.user.id)
