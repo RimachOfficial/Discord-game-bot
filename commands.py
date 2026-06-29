@@ -318,7 +318,7 @@ class FishingCommands(commands.Cog):
             "Your goal is to cast your line, manipulate a dynamic stock market, "
             "collect illegal Black Market items, and build your ultimate net worth. "
             "Here is everything you need to know to survive the market:\n\n"
-            "---"
+            "\n"
         )
 
         embed.add_field(
@@ -326,7 +326,7 @@ class FishingCommands(commands.Cog):
             value=(
                 "• `/fish` : Cast your line to catch fish across 10 rarity tiers (from Bozo ⚪ to God ✨).\n"
                 "• `/inventory` : View your fish stockpile and see how their current value stacks up against base pricing.\n"
-                "• `/balance` : Check your liquid cash versus your total asset net worth."
+                "• `/balance` : Check your liquid cash versus your total asset net worth. \n\n"
             ),
             inline=False
         )
@@ -336,7 +336,7 @@ class FishingCommands(commands.Cog):
             value=(
                 "• `/market` : Prices shift naturally every 5 minutes with randomized breaking news events!\n"
                 "• `/sell <tier>` or `/sell_all` : Liquidating a huge tier **crashes** its global value. Thanks to a dynamic curve, you are paid the *average price* across the crash to prevent exploits.\n"
-                "• `/buy <tier> <qty>` : Purchasing fish directly from the market drives its global price **skyward**."
+                "• `/buy <tier> <qty>` : Purchasing fish directly from the market drives its global price **skyward**. \n\n"
             ),
             inline=False
         )
@@ -346,7 +346,7 @@ class FishingCommands(commands.Cog):
             value=(
                 "• Got trash or low-tier fish? Don't sell them for pennies. Use `/free` to release your inventory back into the sea!\n"
                 "• Releasing fish grants permanent **Karma Points** for those specific tiers.\n"
-                "• Every 100 Karma points gives a **+1% luck bonus** to your base catch rates. Grind Karma to make rare fish spawn effortlessly!"
+                "• Every 100 Karma points gives a **+1% luck bonus** to your base catch rates. Grind Karma to make rare fish spawn effortlessly! \n\n"
             ),
             inline=False
         )
@@ -357,7 +357,7 @@ class FishingCommands(commands.Cog):
                 "Check `/items` to purchase or track rule-bending items:\n"
                 "• **📄 Tax Evasion Manual:** Freeze the market! Sell off inventory completely clean without triggering a global price crash.\n"
                 "• **📱 Burner Phone:** Trigger a malicious Bogdanoff Short Squeeze, tripling your downward market impact to ruin the economy for everyone else.\n"
-                "• **💳 Mommy's Credit Card:** Access infinite VIP liquidity! Buy mass fish volume at a perfectly flat market rate without driving the price up while buying."
+                "• **💳 Mommy's Credit Card:** Access infinite VIP liquidity! Buy mass fish volume at a perfectly flat market rate without driving the price up while buying. \n\n"
             ),
             inline=False
         )
