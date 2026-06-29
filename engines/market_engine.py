@@ -3,8 +3,8 @@ import math
 from constants import FISH_DATA
 
 chance_to_trigger_shock: float = 0.30  # chance per market update loop
-weight_floor: float = 0.05
-weight_ceiling: float = 1000.0
+weight_floor: float = 0.01
+weight_ceiling: float = 99999999.0
 
 
 def calculate_market_fluctuations(current_prices: list[tuple[str, float]]) -> dict[str, float]:

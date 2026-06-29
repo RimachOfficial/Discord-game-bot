@@ -1,9 +1,11 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from constants import FISH_DATA, FISH_TIERS, ITEM_CHOICES
+from constants import FISH_DATA, FISH_TIERS, ITEM_CHOICES, FISH_TO_TIER # <-- Added FISH_TO_TIER
 from engines import fishing_engine, economy_engine, item_engine
 from discord.app_commands import Choice
+import time
+import engines.market_chart_engine # <-- Ensure the chart engine is imported
 
 class FishingCommands(commands.Cog):
     def __init__(self, bot):
@@ -118,7 +120,6 @@ class FishingCommands(commands.Cog):
             color=discord.Color.gold()
         )
 
-        #FIX FOR HUGE NUMBERS TO DISPLAY CORRECLY
         if portfolio['wallet_cash'] < 1e15:
             embed.add_field(name="💵 Liquid Cash", value=f"`${portfolio['wallet_cash']:,.2f}`", inline=True)
         else:
@@ -163,7 +164,6 @@ class FishingCommands(commands.Cog):
         for i, tier in enumerate(FISH_TIERS):
             base_prob, my_prob = fishing_engine.calculate_catch_probabilities(tier, dynamic_weights, has_copium, has_gamer_girl)
             
-            # Revert from per-species to per-tier for the pie chart display
             species_in_tier = len(FISH_DATA[tier]["species"])
             base_tier_prob = base_prob * species_in_tier
             my_tier_prob = my_prob * species_in_tier
@@ -187,7 +187,7 @@ class FishingCommands(commands.Cog):
         user_inv = self.db.get_inventory(user_id)
         market_prices = dict(self.db.get_market_prices())
         
-        if not user_inv:
+        if not user_inv or sum(quantity for _, quantity in user_inv if quantity > 0) == 0:
             await interaction.followup.send("🪣 Your inventory is already empty!")
             return
 
@@ -210,13 +210,30 @@ class FishingCommands(commands.Cog):
         self.db.update_player_cash(user_id, result["total_payout"], interaction.user.name)
         self.db.clear_inventory(user_id)
         
-        if result["sanitized_drops"]:
-            new_prices = {}
-            for tier, drop in result["sanitized_drops"].items():
-                old_price = market_prices.get(tier, FISH_DATA[tier]["value"])
-                new_price = max(0, old_price - drop)
-                new_prices[tier] = new_price
-            self.db.update_market_prices_bulk(new_prices)
+        # 🛡️ FIX NameError / Chart Tracking Logic: Identify exactly which tiers were handled
+        sold_tiers = set()
+        for fish_name, quantity in user_inv:
+            if quantity > 0:
+                tier_found = FISH_TO_TIER.get(fish_name)
+                if tier_found:
+                    sold_tiers.add(tier_found)
+
+        new_prices = {}
+        db_updates = {}
+        for tier in sold_tiers:
+            old_price = market_prices.get(tier, FISH_DATA[tier]["value"])
+            drop = result["sanitized_drops"].get(tier, 0)
+            final_calculated_price = max(0, old_price - drop)
+            
+            # If tax evasion is active, actual market price doesn't budge
+            if has_tax_evasion:
+                new_prices[tier] = old_price
+            else:
+                new_prices[tier] = final_calculated_price
+                db_updates[tier] = final_calculated_price
+
+        if db_updates:
+            self.db.update_market_prices_bulk(db_updates)
 
         embed = discord.Embed(
             title="💰 Massive Payout!",
@@ -225,12 +242,29 @@ class FishingCommands(commands.Cog):
         )
         embed.add_field(name="Total Cash Earned", value=f"`${result['total_payout']:.2f}`", inline=False)
         
-        if result["impacted_tiers_text"]:
+        if result["impacted_tiers_text"] and not has_tax_evasion:
             embed.add_field(name="📉 Market Damage Caused", value="\n".join(result["impacted_tiers_text"]), inline=False)
         elif has_tax_evasion:
             embed.add_field(name="💼 Offshore Accounts", value="Your Tax Evasion Manual prevented the market from crashing!", inline=False)
             
         embed.set_footer(text="Check your new balance with /balance")
+
+        # Safely execute data metrics tracking across all liquidated items
+        now = time.time()
+        for tier, price in new_prices.items():
+            self.db.cursor.execute(
+                "INSERT INTO market_history (tier_name, price, timestamp) VALUES (?, ?, ?)",
+                (tier, float(price), now)
+            )
+        self.db.conn.commit()
+        
+        print("📊 Executing chart generation routine via mass sale event...")
+        try:
+            engines.market_chart_engine.generate_and_save_market_chart(self.db)
+            print("✅ market_trend.png successfully updated on disk!")
+        except Exception as e:
+            print(f"❌ Chart Engine generation error: {e}")
+
         await interaction.followup.send(embed=embed)
 
     @app_commands.command(name="items", description="Inspect all the unhinged items coming to the game!")
@@ -257,6 +291,7 @@ class FishingCommands(commands.Cog):
     @app_commands.command(name="give_item", description="[ADMIN] Spawn a Black Market item for testing.")
     @app_commands.default_permissions(administrator=True)
     @app_commands.choices(item_name=ITEM_CHOICES)
+
     async def give_item(self, interaction: discord.Interaction, target: discord.Member, item_name: Choice[str], quantity: int = 1):
         user_id = str(target.id)
         self.db.add_item(user_id, item_name.value, quantity)
@@ -265,6 +300,8 @@ class FishingCommands(commands.Cog):
     @app_commands.command(name="use", description="Use a consumable Black Market item!")
     @app_commands.choices(item_name=ITEM_CHOICES)
     async def use_item(self, interaction: discord.Interaction, item_name: Choice[str]):
+    
+
         user_id = str(interaction.user.id)
         actual_item_name = item_name.value 
         
@@ -289,7 +326,6 @@ class FishingCommands(commands.Cog):
             result = item_engine.execute_car_battery(current_karma)
             
             if not result["success"]:
-                # Refund the item because they couldn't use it!
                 self.db.add_item(user_id, actual_item_name, 1)
                 await interaction.response.send_message(result["msg"], ephemeral=True)
                 return
@@ -305,7 +341,6 @@ class FishingCommands(commands.Cog):
 
     @app_commands.command(name="how_to_play", description="Explaining how to play and the rules")
     async def how_to_play(self, interaction: discord.Interaction):
-        # 1. Instantly defer to comply with anti-lag protocols
         await interaction.response.defer()
         
         embed = discord.Embed(
@@ -363,8 +398,6 @@ class FishingCommands(commands.Cog):
         )
 
         embed.set_footer(text="Rule #1: The ecosystem hates you. Rule #2: Maximize your margins. Happy fishing!")
-        
-        # 3. Deliver via followup
         await interaction.followup.send(embed=embed)
         
 

@@ -61,6 +61,14 @@ class DatabaseManager:
                 PRIMARY KEY (user_id, buff_name)
             )
         ''')
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS market_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tier_name TEXT,
+                price REAL,
+                timestamp REAL
+            )           
+        ''')
         self.conn.commit()
 
     def init_market(self):

@@ -3,8 +3,10 @@ from discord import app_commands
 from discord.ext import commands, tasks
 from constants import FISH_DATA, FISH_TO_TIER
 from engines import market_engine
+import engines.market_chart_engine
+import time
 
-minutes_of_update=5.0
+minutes_of_update = 5.0
 
 class MarketCommands(commands.Cog):
     def __init__(self, bot):
@@ -17,9 +19,7 @@ class MarketCommands(commands.Cog):
 
     @tasks.loop(minutes=minutes_of_update)
     async def update_prices(self):
-
         channel_ids = self.db.get_all_news_channels()
-
         current_prices = self.db.get_market_prices()
         
         # 1. Normal Market Fluctuations
@@ -28,23 +28,22 @@ class MarketCommands(commands.Cog):
         print("🎲 Market loop ticked: Prices changed")
         
         embed = discord.Embed(
-                    title="📰PRICES UPDATE TICK📰", 
-                    description=f"{minutes_of_update} passed and market updated", 
-                    color=discord.Color.red()
-                )
+            title="📰PRICES UPDATE TICK📰", 
+            description=f"{minutes_of_update} passed and market updated", 
+            color=discord.Color.red()
+        )
         
         for cid in channel_ids:
-                    channel = self.bot.get_channel(int(cid))
-                    if channel:
-                        try:
-                            await channel.send(embed=embed)
-                            print(f"✅ Successfully sent update tick to channel ID: {cid}")
-                        except discord.Forbidden:
-                            print(f"❌ Failed to send update tick: Lacking permissions in channel ID: {cid}")
-                    else:
-                        print(f"⚠️ Channel ID {cid} could not be found by the bot cache.")
+            channel = self.bot.get_channel(int(cid))
+            if channel:
+                try:
+                    await channel.send(embed=embed)
+                    print(f"✅ Successfully sent update tick to channel ID: {cid}")
+                except discord.Forbidden:
+                    print(f"❌ Failed to send update tick: Lacking permissions in channel ID: {cid}")
+            else:
+                print(f"⚠️ Channel ID {cid} could not be found by the bot cache.")
 
-        
         # 2. Market Shocks (Random News Events)
         shock_event = market_engine.generate_market_shock()
         if shock_event:
@@ -76,6 +75,21 @@ class MarketCommands(commands.Cog):
                             print(f"❌ Failed to send: Lacking permissions in channel ID: {cid}")
                     else:
                         print(f"⚠️ Channel ID {cid} could not be found by the bot cache.")
+        
+        now = time.time()
+        for tier, price in new_prices.items():
+            self.db.cursor.execute(
+                "INSERT INTO market_history (tier_name, price, timestamp) VALUES (?, ?, ?)",
+                (tier, float(price), now)
+            )
+        self.db.conn.commit()
+
+        print("📊 Executing chart generation routine...")
+        try:
+            engines.market_chart_engine.generate_and_save_market_chart(self.db)
+            print("✅ market_trend.png successfully updated on disk!")
+        except Exception as e:
+            print(f"❌ Chart Engine generation error: {e}")
 
     @update_prices.before_loop
     async def before_update_prices(self):
@@ -102,7 +116,17 @@ class MarketCommands(commands.Cog):
                 inline=True
             )
             
-        await interaction.followup.send(embed=embed)
+        # Try to attach the generated line chart seamlessly
+        try:
+            file = discord.File("market_trend.png", filename="market_trend.png")
+            embed.set_image(url="attachment://market_trend.png")
+            await interaction.followup.send(embed=embed, file=file)
+        except FileNotFoundError:
+            print("⚠️ market_trend.png not found on disk yet. Sending text embed only.")
+            await interaction.followup.send(embed=embed)
+        except Exception as e:
+            print(f"❌ Failed to attach market chart: {e}")
+            await interaction.followup.send(embed=embed)
 
     @app_commands.command(name="sell", description="Sell an entire tier of fish from your inventory!")
     @app_commands.choices(tier=[app_commands.Choice(name=t, value=t) for t in FISH_DATA.keys()])
@@ -112,7 +136,6 @@ class MarketCommands(commands.Cog):
         user_id = str(interaction.user.id)
         chosen_tier = tier.value
         
-        # --- NEW: Check for Black Market Buffs ---
         has_tax_evasion = (
             self.db.get_item_count(user_id, "📄 Tax Evasion Manual") > 0
             and self.db.get_buff(user_id, "item_disabled:📄 Tax Evasion Manual") is None
@@ -137,22 +160,21 @@ class MarketCommands(commands.Cog):
             await interaction.followup.send(f"🪣 You don't have any fish from the **{chosen_tier}** tier to sell!")
             return
             
-        # Execute Domain Logic (You will need to pass the buffs here too!)
         total_payout, actual_drop, new_price = market_engine.calculate_sell_impact(
             chosen_tier, total_fish_to_sell, current_unit_price, has_tax_evasion, has_short_squeeze
         )
         
-        # Save to DB
         self.db.update_player_cash(user_id, total_payout, interaction.user.name)
         self.db.clear_specific_fish(user_id, fish_to_reset)
         
-        # Consume the Burner Phone charge if used
         if has_short_squeeze:
             self.db.clear_buff(user_id, "short_squeeze")
         
-        # --- NEW: Respect Tax Evasion ---
+        # 🛡️ FIX: Track the actual applied price to prevent phantom chart dips
+        price_to_log = current_unit_price
         if not has_tax_evasion:
             self.db.update_market_price(chosen_tier, new_price)
+            price_to_log = new_price
         
         embed = discord.Embed(title="💰 Transaction Complete!", color=discord.Color.green())
         payout_display = f"{total_payout:,.2f}" if total_payout < 1e15 else f"{total_payout:.4e}"
@@ -168,21 +190,30 @@ class MarketCommands(commands.Cog):
         else:
             embed.description += f"📉 **Market Impact:** The massive supply drop caused the value of {chosen_tier} to tumble from **${old_price_display}** down to **${new_price_display}**!"
             
+        # Log historical node
+        self.db.cursor.execute(
+            "INSERT INTO market_history (tier_name, price, timestamp) VALUES (?, ?, ?)",
+            (chosen_tier, float(price_to_log), time.time())
+        )
+        self.db.conn.commit()
+
+        print(f"📉 Player adjusted {chosen_tier} stock data. Regenerating chart...")
+        try:
+            engines.market_chart_engine.generate_and_save_market_chart(self.db)
+        except Exception as e:
+            print(f"❌ Chart Engine error on /sell: {e}")
+        
         await interaction.followup.send(embed=embed)
+        
 
     @app_commands.command(name="setnews", description="Set the channel for breaking market news.")
     async def setnews(self, interaction: discord.Interaction):
-        # 🌟 THIS MUST BE THE VERY FIRST LINE:
         await interaction.response.defer() 
         
-        # Now we grab the IDs
         guild_id = str(interaction.guild.id)
         channel_id = str(interaction.channel_id)
         
-        # Now we hit your flawless database function
         self.db.set_news_channel(guild_id, channel_id)
-        
-        # Finally, we use followup.send instead of response.send_message
         await interaction.followup.send(f"✅ News channel successfully set to <#{channel_id}>!")
 
     @app_commands.command(name="buy", description="Buy a fish directly from the market and drive its value up!")
@@ -206,7 +237,6 @@ class MarketCommands(commands.Cog):
             and self.db.get_buff(user_id, "item_disabled:💳 Mommy's Credit Card") is None
         )
         
-        # Domain Logic
         impact = market_engine.calculate_buy_impact(chosen_tier, quantity, current_unit_price, player_cash, has_credit_card)
         
         if not impact["success"]:
@@ -216,7 +246,6 @@ class MarketCommands(commands.Cog):
         total_cost = impact["total_cost"]
         new_price = impact["new_price"]
         
-        # Save to DB
         self.db.update_player_cash(user_id, -total_cost)
         import random
         import math
@@ -225,7 +254,6 @@ class MarketCommands(commands.Cog):
         species_list = FISH_DATA[chosen_tier]["species"]
         species_counts = {}
 
-        # 1. If quantity is huge, use instant O(1) math instead of allocating gigabytes of memory
         if quantity > 100000:
             remaining_qty = quantity
             for i in range(len(species_list) - 1):
@@ -237,11 +265,9 @@ class MarketCommands(commands.Cog):
                 remaining_qty -= count
             species_counts[species_list[-1]] = remaining_qty
         else:
-            # Fast normal generation for smaller regular purchases
             bought_species = random.choices(species_list, k=quantity)
             species_counts = Counter(bought_species)
         
-        # 2. Update the database using the compressed counts
         for species_name, count in species_counts.items():
             if count <= 0: continue
             self.db.cursor.execute(
@@ -264,7 +290,6 @@ class MarketCommands(commands.Cog):
             f"💸 **Total Spent:** `-${cost_display}`\n\n"
         )
         
-        # --- NEW: Custom text if they used the Credit Card ---
         if has_credit_card:
             embed.description += "💳 **Mommy's Credit Card:** Your VIP banking completely bypassed the market slippage! The price didn't budge an inch."
         else:
@@ -273,6 +298,18 @@ class MarketCommands(commands.Cog):
                 f"to skyrocket from **${old_price_display}** up to **${new_price_display}**!"
             )
             
+        self.db.cursor.execute(
+            "INSERT INTO market_history (tier_name, price, timestamp) VALUES (?, ?, ?)",
+            (chosen_tier, float(new_price), time.time())
+        )
+        self.db.conn.commit()
+
+        print(f"📈 Player surged {chosen_tier}. Regenerating chart...")
+        try:
+            engines.market_chart_engine.generate_and_save_market_chart(self.db)
+        except Exception as e:
+            print(f"❌ Chart Engine error on /buy: {e}")
+        
         await interaction.followup.send(embed=embed)
 
 async def setup(bot):
