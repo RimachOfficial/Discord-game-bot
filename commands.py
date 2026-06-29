@@ -303,5 +303,70 @@ class FishingCommands(commands.Cog):
                 f"📉 **Penalty:** You lost {result['karma_lost']} Karma. The ecosystem absolutely hates you."
             )
 
+    @app_commands.command(name="how_to_play", description="Explaining how to play and the rules")
+    async def how_to_play(self, interaction: discord.Interaction):
+        # 1. Instantly defer to comply with anti-lag protocols
+        await interaction.response.defer()
+        
+        embed = discord.Embed(
+            title="🎣 Welcome to Bipbob's Live Fish Market! 📈", 
+            color=discord.Color.blue()
+        )
+        
+        embed.description = (
+            "Welcome to a chaotic, heavily economy-driven fishing simulator! "
+            "Your goal is to cast your line, manipulate a dynamic stock market, "
+            "collect illegal Black Market items, and build your ultimate net worth. "
+            "Here is everything you need to know to survive the market:\n\n"
+            "---"
+        )
+
+        embed.add_field(
+            name="🎮 1. The Core Gameplay Loop",
+            value=(
+                "• `/fish` : Cast your line to catch fish across 10 rarity tiers (from Bozo ⚪ to God ✨).\n"
+                "• `/inventory` : View your fish stockpile and see how their current value stacks up against base pricing.\n"
+                "• `/balance` : Check your liquid cash versus your total asset net worth."
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="📈 2. Shifting Stocks & Dynamic Slippage",
+            value=(
+                "• `/market` : Prices shift naturally every 5 minutes with randomized breaking news events!\n"
+                "• `/sell <tier>` or `/sell_all` : Liquidating a huge tier **crashes** its global value. Thanks to a dynamic curve, you are paid the *average price* across the crash to prevent exploits.\n"
+                "• `/buy <tier> <qty>` : Purchasing fish directly from the market drives its global price **skyward**."
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="☯️ 3. The Karma System (Permanent Luck)",
+            value=(
+                "• Got trash or low-tier fish? Don't sell them for pennies. Use `/free` to release your inventory back into the sea!\n"
+                "• Releasing fish grants permanent **Karma Points** for those specific tiers.\n"
+                "• Every 100 Karma points gives a **+1% luck bonus** to your base catch rates. Grind Karma to make rare fish spawn effortlessly!"
+            ),
+            inline=False
+        )
+
+        embed.add_field(
+            name="⬛ 4. Rigging the Game (The Black Market)",
+            value=(
+                "Check `/items` to purchase or track rule-bending items:\n"
+                "• **📄 Tax Evasion Manual:** Freeze the market! Sell off inventory completely clean without triggering a global price crash.\n"
+                "• **📱 Burner Phone:** Trigger a malicious Bogdanoff Short Squeeze, tripling your downward market impact to ruin the economy for everyone else.\n"
+                "• **💳 Mommy's Credit Card:** Access infinite VIP liquidity! Buy mass fish volume at a perfectly flat market rate without driving the price up while buying."
+            ),
+            inline=False
+        )
+
+        embed.set_footer(text="Rule #1: The ecosystem hates you. Rule #2: Maximize your margins. Happy fishing!")
+        
+        # 3. Deliver via followup
+        await interaction.followup.send(embed=embed)
+        
+
 async def setup(bot):
     await bot.add_cog(FishingCommands(bot))
