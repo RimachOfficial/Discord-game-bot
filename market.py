@@ -253,8 +253,6 @@ class MarketCommands(commands.Cog):
             )
             
         await interaction.followup.send(embed=embed)
-        
-        await interaction.followup.send(embed=embed)
 
 async def setup(bot):
     await bot.add_cog(MarketCommands(bot))
