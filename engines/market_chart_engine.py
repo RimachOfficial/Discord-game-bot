@@ -5,7 +5,7 @@ import matplotlib
 matplotlib.use('Agg') 
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-import matplotlib.ticker as ticker # <--- Add this new import
+import matplotlib.ticker as ticker
 from datetime import datetime
 
 def generate_and_save_market_chart(db_manager) -> str:

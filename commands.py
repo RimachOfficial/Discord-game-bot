@@ -300,15 +300,31 @@ class FishingCommands(commands.Cog):
     @app_commands.command(name="use", description="Use a consumable Black Market item!")
     @app_commands.choices(item_name=ITEM_CHOICES)
     async def use_item(self, interaction: discord.Interaction, item_name: Choice[str]):
-    
-
         user_id = str(interaction.user.id)
         actual_item_name = item_name.value 
         
+        # 1. Protect Passive Items from being eaten
+        valid_consumables = [
+            "🍼 Copium Inhaler", 
+            "📱 Bogdanoff’s Burner Phone", 
+            "🧼 Gamer Girl Bathwater", 
+            "🔋 Throw a Car Battery in the Ocean"
+        ]
+        
+        if actual_item_name not in valid_consumables:
+            await interaction.response.send_message(
+                f"ℹ️ **{actual_item_name}** is a **Passive Item**! You don't need to activate it. "
+                f"Its effects are automatically running in the background as long as it's in your inventory.", 
+                ephemeral=True
+            )
+            return
+
+        # 2. Check inventory and consume only if it's an active consumable
         if not self.db.consume_item(user_id, actual_item_name):
             await interaction.response.send_message(f"❌ You don't have **{actual_item_name}** in your inventory, bozo.", ephemeral=True)
             return
 
+        # 3. Execute active item logic
         if actual_item_name == "🍼 Copium Inhaler":
             self.db.set_buff(user_id, "copium_active", "1")
             await interaction.response.send_message("🍼 *huffff* You ripped the Copium Inhaler! Your next `/fish` has a massively boosted chance for `God ✨` tier.")
@@ -326,6 +342,7 @@ class FishingCommands(commands.Cog):
             result = item_engine.execute_car_battery(current_karma)
             
             if not result["success"]:
+                # Refund the item because they couldn't use it!
                 self.db.add_item(user_id, actual_item_name, 1)
                 await interaction.response.send_message(result["msg"], ephemeral=True)
                 return
@@ -338,7 +355,6 @@ class FishingCommands(commands.Cog):
                 f"🎣 **Loot:** {result['catch_text']}\n"
                 f"📉 **Penalty:** You lost {result['karma_lost']} Karma. The ecosystem absolutely hates you."
             )
-
     @app_commands.command(name="how_to_play", description="Explaining how to play and the rules")
     async def how_to_play(self, interaction: discord.Interaction):
         await interaction.response.defer()
