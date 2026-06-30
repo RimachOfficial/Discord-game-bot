@@ -88,7 +88,7 @@ ITEM_CATALOG = {
         },
         "🧼 Gamer Girl Bathwater": {
             "type": "Lure",
-            "price": 15000,
+            "price": 50000,
             "desc": "Guarantees your next 3 catches will exclusively be from the `Your Mother 🟣` or `Gay 🌈` tiers."
         }
     },
