@@ -83,8 +83,8 @@ ITEM_CATALOG = {
         },
         "🍼 Copium Inhaler": {
             "type": "Consumable",
-            "price": 25000,
-            "desc": "Massive +50% luck boost to catch a `God ✨` tier for exactly one cast. If you still catch an `Old Boot`, the bot publicly pings you to laugh at your horrible luck."
+            "price": 100000,
+            "desc": "makes you have +1% chance plus karma to catch a `God ✨` tier for exactly one cast. If you still catch an `Old Boot`, the bot publicly pings you to laugh at your horrible luck."
         },
         "🧼 Gamer Girl Bathwater": {
             "type": "Lure",

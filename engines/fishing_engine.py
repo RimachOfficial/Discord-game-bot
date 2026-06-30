@@ -43,14 +43,15 @@ def calculate_catch_probabilities(tier: str, dynamic_weights: list[float], has_c
             exact_catch_pct = 0.0
         return base_catch_pct, exact_catch_pct
 
-    # Player's Karma Probability
+    # Player's Karma Probability (This already includes their natural karma buffs)
     tier_probability = my_tier_weight / total_weight_sum if total_weight_sum > 0 else 0
     
     if has_copium:
+        # Flat 1% safety net added to their natural karma chance
         if tier == "God ✨":
-            tier_probability = 0.50 + (0.50 * tier_probability)
+            tier_probability = 0.01 + (0.99 * tier_probability)
         else:
-            tier_probability = 0.50 * tier_probability
+            tier_probability = 0.99 * tier_probability
             
     exact_catch_pct = (tier_probability / species_in_tier) * 100
     return base_catch_pct, exact_catch_pct
@@ -63,9 +64,11 @@ def roll_fish(raw_karma: dict, has_mod_app: bool, has_bf_repellent: bool, has_co
     if has_gamer_girl:
         tier = random.choice(["Your Mother 🟣", "Gay 🌈"])
     elif has_copium:
-        if random.random() < 0.50:
+        # Flat 1% intercept roll
+        if random.random() < 0.01:
             tier = "God ✨"
         else:
+            # If the 1% fails, roll normally using dynamic_weights (which has their karma)
             tier = random.choices(FISH_TIERS, weights=dynamic_weights, k=1)[0]
     else:
         tier = random.choices(FISH_TIERS, weights=dynamic_weights, k=1)[0]

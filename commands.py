@@ -291,7 +291,6 @@ class FishingCommands(commands.Cog):
     @app_commands.command(name="give_item", description="[ADMIN] Spawn a Black Market item for testing.")
     @app_commands.default_permissions(administrator=True)
     @app_commands.choices(item_name=ITEM_CHOICES)
-
     async def give_item(self, interaction: discord.Interaction, target: discord.Member, item_name: Choice[str], quantity: int = 1):
         user_id = str(target.id)
         self.db.add_item(user_id, item_name.value, quantity)
