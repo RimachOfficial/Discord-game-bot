@@ -1,8 +1,63 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
+from discord.ui import Modal, TextInput
 from constants import ITEM_CATALOG
 from engines import item_engine
+
+class BulkPurchaseModal(Modal):
+    def __init__(self, db, item_name, price):
+        super().__init__(title=f"Bulk Buy: {item_name}")
+        self.db = db
+        self.item_name = item_name
+        self.price = price
+
+        # Text input for quantity selection
+        self.quantity_input = TextInput(
+            label=f"Quantity (Price per unit: ${price:,})",
+            placeholder="Enter the number of items you want to buy...",
+            min_length=1,
+            max_length=4,
+            required=True
+        )
+        self.add_item(self.quantity_input)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        raw_val = self.quantity_input.value.strip()
+        
+        # 1. Validation Checks
+        if not raw_val.isdigit():
+            await interaction.response.send_message("❌ Purchase cancelled. Please enter a valid positive whole number.", ephemeral=True)
+            return
+            
+        quantity = int(raw_val)
+        if quantity <= 0:
+            await interaction.response.send_message("❌ Purchase cancelled. You must buy at least 1 item.", ephemeral=True)
+            return
+
+        user_id = str(interaction.user.id)
+        total_cost = self.price * quantity
+        current_cash = self.db.get_player_balance(user_id)
+
+        # 2. Balance Verification
+        if current_cash < total_cost:
+            await interaction.response.send_message(
+                f"❌ You don't have enough cash! **{quantity}x {self.item_name}** costs `${total_cost:,}`, but you only have `${current_cash:,}`.", 
+                ephemeral=True
+            )
+            return
+
+        # 3. Process Bulk Database Transactions
+        self.db.update_player_cash(user_id, -total_cost, interaction.user.name)
+        
+        # Safely loops the inventory insertion to support your existing database layout
+        for _ in range(quantity):
+            self.db.add_item(user_id, self.item_name)
+
+        await interaction.response.send_message(
+            f"✅ **Bulk Purchase Successful!**\nBought **{quantity}x {self.item_name}** for a total of `${total_cost:,}`!"
+        )
+
 
 class ShopDropdown(discord.ui.Select):
     def __init__(self, db, user_cash):
@@ -34,23 +89,48 @@ class ShopDropdown(discord.ui.Select):
             await interaction.response.send_message("❌ This is not your shop menu!", ephemeral=True)
             return
             
-        await interaction.response.defer()
-        
         selected_item = self.values[0]
         user_id = str(interaction.user.id)
         
-        # Fetch fresh data in case they bought something else
+        # Locate item configuration inside ITEM_CATALOG
+        item_details = None
+        for category, items in ITEM_CATALOG.items():
+            if selected_item in items:
+                item_details = items[selected_item]
+                break
+                
+        if not item_details:
+            await interaction.response.send_message("❌ Item data not found in catalog.", ephemeral=True)
+            return
+            
+        item_type = item_details.get("type", "Consumable")
+        price = item_details.get("price", 999999999)
+
+        # ------------------------------------------------------------------
+        # FLOW A: CONSUMABLE ITEM -> Prompt Modal for Bulk Quantity
+        # ------------------------------------------------------------------
+        if item_type == "Consumable":
+            modal = BulkPurchaseModal(self.db, selected_item, price)
+            await interaction.response.send_modal(modal)
+            return
+
+        # ------------------------------------------------------------------
+        # FLOW B: PASSIVE ITEM -> Normal Single Instant Buy
+        # ------------------------------------------------------------------
+        await interaction.response.defer()
+        
+        # Fetch fresh data for verification
         current_cash = self.db.get_player_balance(user_id)
         owned_count = self.db.get_item_count(user_id, selected_item)
         
-        # 1. Run logic via engine
+        # Run logic via engine
         result = item_engine.calculate_item_purchase(selected_item, current_cash, owned_count)
         
         if not result["success"]:
             await interaction.followup.send(result["msg"], ephemeral=True)
             return
             
-        # 2. Database Transactions
+        # Database Transactions
         self.db.update_player_cash(user_id, -result["price"], interaction.user.name)
         self.db.add_item(user_id, selected_item)
         
@@ -75,7 +155,7 @@ class ShopCog(commands.Cog):
         
         embed = discord.Embed(
             title="🛒 Welcome to the Black Market!",
-            description="Spend your liquid cash on illegal gear and passives.\nSelect an item from the dropdown below to purchase it instantly.",
+            description="Spend your liquid cash on illegal gear and passives.\nSelect an item from the dropdown below to purchase.",
             color=discord.Color.dark_purple()
         )
         
@@ -100,7 +180,7 @@ class ShopCog(commands.Cog):
             if items_text:
                 embed.add_field(name=category, value=items_text, inline=False)
                 
-        embed.set_footer(text="Passives can only be bought once and do not stack!")
+        embed.set_footer(text="Passives can only be bought once! Consumables can be bought in bulk.")
         
         view = ShopView(self.db, user_cash)
         await interaction.response.send_message(embed=embed, view=view)
