@@ -354,6 +354,7 @@ class FishingCommands(commands.Cog):
                 f"🎣 **Loot:** {result['catch_text']}\n"
                 f"📉 **Penalty:** You lost {result['karma_lost']} Karma. The ecosystem absolutely hates you."
             )
+
     @app_commands.command(name="how_to_play", description="Explaining how to play and the rules")
     async def how_to_play(self, interaction: discord.Interaction):
         await interaction.response.defer()

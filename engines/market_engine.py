@@ -2,7 +2,7 @@ import random
 import math
 from constants import FISH_DATA
 
-chance_to_trigger_shock: float = 0.30  # chance per market update loop
+chance_to_trigger_shock: float = 0.15  # chance per market update loop
 weight_floor: float = 0.01
 weight_ceiling: float = 99999999.0
 
@@ -14,7 +14,7 @@ def calculate_market_fluctuations(current_prices: list[tuple[str, float]]) -> di
         base_price = float(FISH_DATA[tier]["value"])
         current_price = float(current_price)
         
-        change_percent = random.uniform(-0.15, 0.20)
+        change_percent = random.uniform(-0.5, 0.5)
         new_price = current_price * (1 + change_percent)
         
         # Enforce limits safely using float checks
