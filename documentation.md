@@ -8,8 +8,8 @@ The bot uses `discord.py`'s Cog architecture to keep code modular and clean, adh
 
 * `main.py`: The entry point. Handles bot initialization, loading environment variables via `.env`, syncing slash commands, and loading extensions.
 * `database.py`: The Data Access Layer (DAL). Hand-pures SQLite queries, table creation, and transaction safety. Contains exactly zero game logic, math, bounds checking, or item configurations.
-* `commands.py` / `market.py` / `inventory.py` / `karma_system.py` / `shop.py`: The Interface/Entry Layer. Built as Discord Cogs. Parses interactions, handles UI formatting via embeds, and passes execution data directly to the engines.
-* `engines/*.py`: The Business Logic Layer. Houses `fishing_engine.py`, `market_engine.py`, `economy_engine.py`, and `item_engine.py`. Governs all math, transaction safety, and RNG calculations isolated from the data layer.
+* `commands.py` / `market.py` / `inventory.py` / `karma_system.py` / `shop.py` / `crew.py`: The Interface/Entry Layer. Built as Discord Cogs. Parses interactions, handles UI formatting via embeds, and passes execution data directly to the engines.
+* `engines/*.py`: The Business Logic Layer. Houses `fishing_engine.py`, `market_engine.py`, `economy_engine.py`, `item_engine.py`, and `crew_engine.py`. Governs all math, transaction safety, scaling structures, and RNG calculations isolated from the data layer.
 
 ---
 
@@ -48,6 +48,15 @@ Stores server-specific configurations for the global broadcast network.
 * `guild_id` (TEXT PRIMARY KEY)
 * `news_channel_id` (TEXT)
 
+### 5. `player_crew` 🆕
+
+Stores player ownership states, active rosters, and unlock/level tiers for passive employee scaling.
+
+* `user_id` (TEXT)
+* `crew_name` (TEXT)
+* `level` (INTEGER DEFAULT 0) — *A value of 0 means unhired. Upgrades build increments forward from 1.*
+* *Primary Key:* Composite of `(user_id, crew_name)`
+
 ---
 
 ## ⚖️ Economy & Math Mechanics
@@ -81,16 +90,9 @@ When selling (`/sell` or `/sell_all`) or buying (`/buy`), transactions cause dyn
 * **Price Crash Formula:** `Price Drop = Quantity * (Base Price * 0.005)`
 * **🌟 Slippage Protection:** To prevent exploiters from reaping full-peak value right before a massive dump, players are paid the **average unit price** across the crash curve:
 
-$$
-\text{Average Unit Price} = \frac{\text{Current Price} + \text{New Price}}{2.0}
-$$
+$$\text{Average Unit Price} = \frac{\text{Current Price} + \text{New Price}}{2.0}$$
 
-
-$$
-\text{Total Payout} = \text{Average Unit Price} \times \text{Quantity}
-$$
-
-
+$$\text{Total Payout} = \text{Average Unit Price} \times \text{Quantity}$$
 
 ### 4. Black Market Modifiers & Market Shocks
 
@@ -99,11 +101,32 @@ $$
 * **📱 Burner Phone (Bogdanoff Short Squeeze):** Triples the player's downward market impact ($3.0 \times \text{normal drop}$), aggressively obliterating a tier's market value for everyone else while paying the user normal slippage rates.
 * **💳 Mommy's Credit Card:** Acts as an instant market freeze on buying. Bypasses the standard upward slippage penalty, allowing the player to buy limitless volume at a flat market rate to fund systems like mass releasing.
 
+### 5. Joint-Stock Idle Crew Paycheck Loop 🆕
+
+Active employees generate revenue linked dynamically to live exchange data. Each friend is bound to 2 specific fish tiers, transforming human assets into speculative stock-exposure vehicles. Payouts are computed dynamically across localized, minutely loop intervals (`MINUTES_OF_UPDATE`).
+
+* **Rimach The Fisherman:** Assigned Tiers 1 & 2 (`base_catch_rate = 3.0`)
+* **Jim The Wolf:** Assigned Tiers 3 & 4 (`base_catch_rate = 1.5`)
+* **Magician Oceans Red:** Assigned Tiers 5 & 6 (`base_catch_rate = 0.8`)
+* **Secret the airplane:** Assigned Tiers 7 & 8 (`base_catch_rate = 0.3`)
+* **Katratzoglou:** Assigned Tiers 9 & 10 (`base_catch_rate = 0.1`)
+* **Exponential Promotion Cost Formula:** Upgrading scaling costs are processed dynamically isolated within `crew_engine.py`:
+
+$$\text{Next Upgrade Cost} = \text{Base Cost} \times (\text{Cost Multiplier}^{\text{Current Level}})$$
+
+* **Live Indexed Revenue Formula:** Payouts assess real-time ticker data, falling back to configuration baselines if database states are unset:
+
+$$\text{Time Fraction} = \frac{\text{Minutes of Update}}{60.0}$$
+
+$$\text{Hourly Yield Rate} = \sum_{t \in \text{Assigned Tiers}} (\text{Base Catch Rate} \times \text{Live Price}_t)$$
+
+$$\text{Tick Yield Payout} = (\text{Hourly Yield Rate} \times \text{Employee Level}) \times \text{Time Fraction}$$
+
 ---
 
 ## 🛡️ Anti-Lag Measures (Deferring)
 
-To comply with Discord's strict 3-second interaction window, all core interaction commands (`/fish`, `/inventory`, `/sell`, `/sell_all`, `/market`, `/buy`, `/setnews`) immediately invoke `await interaction.response.defer()`. This converts the 3-second timeout into a safe 15-minute execution window, completely eliminating `Error 10062: Unknown interaction` from blocking heavy database execution or complex calculations under high workloads.
+To comply with Discord's strict 3-second interaction window, all core interaction commands (`/fish`, `/inventory`, `/sell`, `/sell_all`, `/market`, `/buy`, `/setnews`, `/crew`, `/upgrade_crew`) immediately invoke `await interaction.response.defer()`. This converts the 3-second timeout into a safe 15-minute execution window, completely eliminating `Error 10062: Unknown interaction` from blocking heavy database execution or complex calculations under high workloads.
 
 ---
 
@@ -119,6 +142,7 @@ When a player initiates a command modifying or evaluating Karma, database rows a
 ```python
 raw_karma = dict(current_karma)
 total_available_karma = sum(float(points) for points in raw_karma.values())
+
 ```
 
 This protects iterable query structures from premature memory consumption and guarantees seamless loop utility across engine logic.
@@ -129,16 +153,9 @@ The fishing engine iterates through every available fish tier to generate an adj
 * The core formula grants a **+1% luck bonus to the base weight for every 100 Karma points** in a specific tier.
 * **The Math:**
 
-$$
-\text{Luck Bonus Pct} = \frac{\text{Karma Points}}{100.0}
-$$
+$$\text{Luck Bonus Pct} = \frac{\text{Karma Points}}{100.0}$$
 
-
-$$
-\text{Adjusted Weight} = \text{Base Weight} \times \left(1 + \frac{\text{Luck Bonus Pct} / 100.0}{1.0}\right)
-$$
-
-
+$$\text{Adjusted Weight} = \text{Base Weight} \times \left(1 + \frac{\text{Luck Bonus Pct} / 100.0}{1.0}\right)$$
 
 **3. Rolling Modified Probabilities**
 `random.choices` executes using the player's personalized `dynamic_weights` mapping array, giving hard-grinding players massive custom advantages over rare tiers.
