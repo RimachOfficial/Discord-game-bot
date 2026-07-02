@@ -122,3 +122,36 @@ ITEM_CATALOG = {
         }
     }
 }
+
+CREW_CATALOG = {
+    "Rimach The Fisherman": {
+        "base_cost": 1000,
+        "cost_multiplier": 1.5,
+        "base_production": 5.0,
+        "description": "The founding father and supreme architect. Coding this bot while his internet dies every 15 minutes. Pure dedication."
+    },
+    "Jim The Wolf": {
+        "base_cost": 2500,
+        "cost_multiplier": 1.6,
+        "base_production": 15.0,
+        "description": "The youngest playtester. Gave him 1-second cooldown privileges once and he immediately developed a severe dopamine addiction. Needs supervision."
+    },
+    "Magician Oceans Red": {
+        "base_cost": 7500,
+        "cost_multiplier": 1.7,
+        "base_production": 45.0,
+        "description": "Professional master of rage baiting. The team has a toxic love-hate relationship with him. Catches fish just to insult them until they bite."
+    },
+    "Secret the airplane": {
+        "base_cost": 20000,
+        "cost_multiplier": 1.8,
+        "base_production": 150.0,
+        "description": "An actual pilot-in-training with zero conversational filter. Will crash your relationship status faster than a Boeing 737."
+    },
+    "Katratzoglou": {
+        "base_cost": 75000,
+        "cost_multiplier": 2.0,
+        "base_production": 500.0,
+        "description": "Cinema student who went missing to go hard-stuck in MOBA games. Rarely logs in unless there's a gacha banner he can swipe his credit card on."
+    }
+}

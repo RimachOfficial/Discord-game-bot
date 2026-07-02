@@ -158,7 +158,9 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+*.db
 .db
+fishing_game_old_high_havlue.db
 fishing_game.db
 
 # Spyder project settings

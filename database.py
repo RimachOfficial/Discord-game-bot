@@ -69,6 +69,14 @@ class DatabaseManager:
                 timestamp REAL
             )           
         ''')
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS player_crew (
+                user_id TEXT,
+                crew_name TEXT,
+                level INTEGER DEFAULT 0,
+                PRIMARY KEY (user_id, crew_name)
+            )
+        ''')
         self.conn.commit()
 
     def init_market(self):
@@ -269,3 +277,28 @@ class DatabaseManager:
             ON CONFLICT(user_id, item_name) DO UPDATE SET quantity = quantity + ?
         ''', (user_id, item_name, quantity, quantity))
         self.conn.commit()
+
+    def get_crew_level(self, user_id: str, crew_name: str) -> int:
+        """Returns the current level of a specific crew member for a player."""
+        self.cursor.execute(
+            "SELECT level FROM player_crew WHERE user_id = ? AND crew_name = ?", 
+            (user_id, crew_name)
+        )
+        row = self.cursor.fetchone()
+        return row[0] if row else 0
+
+    def set_crew_level(self, user_id: str, crew_name: str, level: int):
+        """Saves or updates a crew member's level."""
+        self.cursor.execute("""
+            INSERT INTO player_crew (user_id, crew_name, level) 
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_id, crew_name) DO UPDATE SET level = excluded.level
+        """, (user_id, crew_name, level))
+        self.conn.commit()
+
+    def get_all_active_crew(self):
+        """Fetches all rows from the crew table to process passive payouts."""
+        self.cursor.execute("SELECT user_id, crew_name, level FROM player_crew WHERE level > 0")
+        return self.cursor.fetchall()
+
+
