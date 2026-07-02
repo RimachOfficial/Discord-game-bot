@@ -115,7 +115,7 @@ class CrewCog(commands.Cog):
                     live_price = market_prices.get(tier, base_price)
                     
                     # Hourly valuation: Catch volume multiplier * value
-                    hourly_crew_yield += config["base_catch_rate"] * live_price
+                    hourly_crew_yield += config["base_production"] * live_price
                 
                 # Multiply by employee level and scale to our execution time slice
                 tick_yield = (hourly_crew_yield * level) * time_fraction
@@ -161,8 +161,8 @@ class CrewCog(commands.Cog):
                 base_val = FISH_DATA.get(tier, {}).get("value", 10.0)
                 live_val = market_prices.get(tier, base_val)
                 
-                current_hourly_rate += (config["base_catch_rate"] * live_val) * max(1, current_level)
-                next_hourly_rate += (config["base_catch_rate"] * live_val) * (current_level + 1)
+                current_hourly_rate += (config["base_production"] * live_val) * max(1, current_level)
+                next_hourly_rate += (config["base_production"] * live_val) * (current_level + 1)
                 
                 trend_marker = "🟢" if live_val > base_val else "🔴" if live_val < base_val else "⚪"
                 tier_status_lines.append(f"{trend_marker} `{tier}` Price: `${live_val:,.2f}`")

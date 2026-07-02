@@ -123,41 +123,40 @@ ITEM_CATALOG = {
     }
 }
 
-# Add or update this inside constants.py
 CREW_CATALOG = {
     "Rimach The Fisherman": {
         "base_cost": 1000,
         "cost_multiplier": 1.5,
-        "assigned_tiers": ["Tier 1", "Tier 2"],
-        "base_catch_rate": 3.0, # Catching 3 fish/hr per level
+        "assigned_tiers": ["Bozo ⚪", "Common 🔘"],
+        "base_production": 3.0, # Fits engine lookup configuration
         "description": "The founding father and supreme architect. Coding this bot while his internet dies every 15 minutes. Pure dedication."
     },
     "Jim The Wolf": {
         "base_cost": 2500,
         "cost_multiplier": 1.6,
-        "assigned_tiers": ["Tier 3", "Tier 4"],
-        "base_catch_rate": 1.5,
+        "assigned_tiers": ["Uncommon 🔵", "El Bozo 🟢"],
+        "base_production": 1.5,
         "description": "The youngest playtester. Gave him 1-second cooldown privileges once and he immediately developed a severe dopamine addiction. Needs supervision."
     },
     "Magician Oceans Red": {
         "base_cost": 7500,
         "cost_multiplier": 1.7,
-        "assigned_tiers": ["Tier 5", "Tier 6"],
-        "base_catch_rate": 0.8,
+        "assigned_tiers": ["Your Mother 🟣", "Legendary 🟡"],
+        "base_production": 0.8,
         "description": "Professional master of rage baiting. The team has a toxic love-hate relationship with him. Catches fish just to insult them until they bite."
     },
     "Secret the airplane": {
         "base_cost": 20000,
         "cost_multiplier": 1.8,
-        "assigned_tiers": ["Tier 7", "Tier 8"],
-        "base_catch_rate": 0.3,
+        "assigned_tiers": ["Rimach 🔴", "Gay 🌈"],
+        "base_production": 0.3,
         "description": "An actual pilot-in-training with zero conversational filter. Will crash your relationship status faster than a Boeing 737."
     },
     "Katratzoglou": {
         "base_cost": 75000,
         "cost_multiplier": 2.0,
-        "assigned_tiers": ["Tier 9", "Tier 10"],
-        "base_catch_rate": 0.1, # Rare drops, but massive payouts if prices skyrocket
+        "assigned_tiers": ["Divine ⚪🟣", "God ✨"],
+        "base_production": 0.1,
         "description": "Cinema student who went missing to go hard-stuck in MOBA games. Rarely logs in unless there's a gacha banner he can swipe his credit card on."
     }
 }
