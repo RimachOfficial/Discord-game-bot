@@ -5,6 +5,7 @@ from constants import FISH_DATA, FISH_TO_TIER
 from engines import market_engine
 import engines.market_chart_engine
 import time
+import asyncio
 
 minutes_of_update = 5.0
 
@@ -86,8 +87,9 @@ class MarketCommands(commands.Cog):
 
         print("📊 Executing chart generation routine...")
         try:
-            engines.market_chart_engine.generate_and_save_market_chart(self.db)
-            print("✅ market_trend.png successfully updated on disk!")
+            # ✅ This hands the heavy processing to a background thread so the bot never freezes!
+            await asyncio.to_thread(engines.market_chart_engine.generate_and_save_market_chart, self.db)
+            print("✅ market_trend.png successfully updated on disk via background thread!")
         except Exception as e:
             print(f"❌ Chart Engine generation error: {e}")
 
@@ -199,7 +201,7 @@ class MarketCommands(commands.Cog):
 
         print(f"📉 Player adjusted {chosen_tier} stock data. Regenerating chart...")
         try:
-            engines.market_chart_engine.generate_and_save_market_chart(self.db)
+            await asyncio.to_thread(engines.market_chart_engine.generate_and_save_market_chart, self.db)
         except Exception as e:
             print(f"❌ Chart Engine error on /sell: {e}")
         
@@ -306,7 +308,7 @@ class MarketCommands(commands.Cog):
 
         print(f"📈 Player surged {chosen_tier}. Regenerating chart...")
         try:
-            engines.market_chart_engine.generate_and_save_market_chart(self.db)
+            await asyncio.to_thread(engines.market_chart_engine.generate_and_save_market_chart, self.db)
         except Exception as e:
             print(f"❌ Chart Engine error on /buy: {e}")
         
