@@ -37,7 +37,7 @@ class BipbobBot(commands.Bot):
         print("✅ Loaded extension: karma_system")
         await self.load_extension("shop")
         print("✅ Loaded extension: shop")
-        await bot.load_extension("cogs.crew_cog")
+        await bot.load_extension("crew")
         print("✅ Loaded extension: Crews")
         # Sync the slash commands globally
         try:
