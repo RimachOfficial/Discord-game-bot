@@ -123,7 +123,7 @@ class CrewCog(commands.Cog):
 
             for user_id, total_cash_earned in payouts.items():
                 if total_cash_earned > 0:
-                    self.db.update_player_cash(user_id, round(total_cash_earned, 2), "Crew Passive Income (Stock Value)")
+                    self.db.update_player_cash(user_id, round(total_cash_earned, 2))
             print(f"✅ Live market-indexed payroll processing complete.")
         except Exception as e:
             print(f"❌ Error in stock evaluation loop: {e}")

@@ -7,6 +7,10 @@ weight_floor: float = 0.01
 weight_ceiling: float = 99999999.0
 
 
+change_percent_up = 0.2
+change_percent_down = -0.2
+
+
 def calculate_market_fluctuations(current_prices: list[tuple[str, float]]) -> dict[str, float]:
     """Calculates normal market fluctuations. Returns a dict of tier -> new_price."""
     new_prices = {}
@@ -14,7 +18,7 @@ def calculate_market_fluctuations(current_prices: list[tuple[str, float]]) -> di
         base_price = float(FISH_DATA[tier]["value"])
         current_price = float(current_price)
         
-        change_percent = random.uniform(-0.5, 0.5)
+        change_percent = random.uniform(change_percent_down, change_percent_up)
         new_price = current_price * (1 + change_percent)
         
         # Enforce limits safely using float checks
