@@ -64,7 +64,7 @@ FISH_DATA = {
 }
 
 FISH_TIERS = list(FISH_DATA.keys())
-FISH_WEIGHTS = [30, 25, 15, 10, 8, 5, 4, 2, 0.6, 0.3, 0.09, 0.01]
+FISH_WEIGHTS = [24, 18, 14, 12, 10, 8, 7, 5, 1.5, 0.4, 0.09, 0.01]
 
 FISH_VALUES = {}
 for tier, info in FISH_DATA.items():
