@@ -146,7 +146,7 @@ CREW_CATALOG = {
         "cost_multiplier": 1.4,
         "assigned_tiers": ["Cringe 😬", "Clown 🤡"],
         "base_production": 5.0,
-        "description": "Future kindergarten teacher currently testing her patience limits by dealing with Rimach. She spends 99% of her lecture hours glued to her phone screen. Has a huge... amount of unread notifications and zero screen time boundaries."
+        "description": "Future kindergarten teacher currently testing her patience limits by dealing with Rimach. She spends 99% of her lecture hours glued to her phone screen. Has huge... amount of unread notifications and zero screen time boundaries."
     },
     "Jim The Wolf": {
         "base_cost": 2500,

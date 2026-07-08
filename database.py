@@ -177,7 +177,18 @@ class DatabaseManager:
 
     def get_market_prices(self):
         self.cursor.execute("SELECT tier_name, current_price FROM market")
-        return self.cursor.fetchall()
+        raw_data = self.cursor.fetchall()
+        
+        # 🌟 Get the perfect order directly from constants.py
+        perfect_order = list(FISH_DATA.keys())
+        
+        # Sort the database rows so they match the FISH_DATA order
+        # If a weird tier exists, it gets sent to the back (index 999)
+        sorted_data = sorted(
+            raw_data, 
+            key=lambda row: perfect_order.index(row[0]) if row[0] in perfect_order else 999
+        )
+        return sorted_data
 
     def update_market_price(self, tier_name: str, new_price: int):
         self.cursor.execute(
