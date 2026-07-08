@@ -1,10 +1,20 @@
 from discord.app_commands import Choice
 
 FISH_DATA = {
+    "Cringe 😬": {
+        "value": 5,
+        "species": ["Skibidi Salmon", "Discord Modfish", "Fedora Carp", "Brainrot Bass", "UwUfish"],
+        "gif": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbXN6cmM3MmswOWY4ZDJ4N2Zpd2txY2c5ZTN1MGptcnU3Y3drdmJveCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3ELtfmA4Apkju/giphy.gif"
+    },
     "Bozo ⚪": {
         "value": 10,
         "species": ["Old Boot", "Wet Cardboard", "Plastic Bottle"],
         "gif": "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaXZycDRqY3k1cHBiOWhmbGxmNTN3bTI4cmpybXZmM25xN24zaXRiYiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/n6z0sYdK2qIUI6Uf8g/giphy.gif"
+    },
+    "Clown 🤡": {
+        "value": 15,
+        "species": ["Clownfish", "Squeaky Puffer", "Honking Shark", "Juggling Eel"],
+        "gif": "https://media.giphy.com/media/100QoSU9uTFU64/giphy.gif"
     },
     "Common 🔘": {
         "value": 25,
@@ -54,7 +64,7 @@ FISH_DATA = {
 }
 
 FISH_TIERS = list(FISH_DATA.keys())
-FISH_WEIGHTS = [35, 25, 15, 10, 8, 5, 1.5, 0.4, 0.09, 0.01]
+FISH_WEIGHTS = [30, 25, 15, 10, 8, 5, 4, 2, 0.6, 0.3, 0.09, 0.01]
 
 FISH_VALUES = {}
 for tier, info in FISH_DATA.items():
@@ -130,6 +140,13 @@ CREW_CATALOG = {
         "assigned_tiers": ["Bozo ⚪", "Common 🔘"],
         "base_production": 3.0, # Fits engine lookup configuration
         "description": "The founding father and supreme architect. Coding this bot while his internet dies every 15 minutes. Pure dedication."
+    },
+    "Ka2lina": {
+        "base_cost": 1500,
+        "cost_multiplier": 1.4,
+        "assigned_tiers": ["Cringe 😬", "Clown 🤡"],
+        "base_production": 5.0,
+        "description": "Future kindergarten teacher currently testing her patience limits by dealing with Rimach. She spends 99% of her lecture hours glued to her phone screen. Has a huge... amount of unread notifications and zero screen time boundaries."
     },
     "Jim The Wolf": {
         "base_cost": 2500,

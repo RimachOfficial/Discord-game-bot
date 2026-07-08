@@ -11,7 +11,8 @@ class CrewRecruitDropdown(discord.ui.Select):
     def __init__(self, db, user_cash, user_id):
         self.db = db
         self.user_cash = user_cash
-        self.user_id = user_id
+        self.user_id =str(user_id)
+        
         
         options = []
         # Gather live prices to show realistic expectations on the dropdown menu
@@ -195,6 +196,7 @@ class CrewCog(commands.Cog):
     @app_commands.describe(crew_member="Select who you are upgrading.")
     @app_commands.choices(crew_member=[
         app_commands.Choice(name="Rimach The Fisherman",    value="Rimach The Fisherman"),
+        app_commands.Choice(name="Ka2lina",                 value="Ka2lina"),
         app_commands.Choice(name="Jim The Wolf",            value="Jim The Wolf"),
         app_commands.Choice(name="Magician Oceans Red",     value="Magician Oceans Red"),
         app_commands.Choice(name="Secret the airplane",     value="Secret the airplane"),

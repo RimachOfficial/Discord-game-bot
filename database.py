@@ -1,5 +1,6 @@
 import sqlite3
 import time
+from constants import FISH_DATA
 
 class DatabaseManager:
     def __init__(self, db_name="fishing_game.db"):
@@ -7,6 +8,21 @@ class DatabaseManager:
         self.cursor = self.conn.cursor()
         self.create_tables()
         self.init_market()
+        #added this if i add new stuff to the tiers to update it for now i will keep it commented(maybe)
+        self.sync_new_market_tiers() 
+
+    def sync_new_market_tiers(self):
+        """Ensures any newly invented fish tiers in constants.py are added to the DB."""
+        for tier_name, config in FISH_DATA.items():
+            base_price = float(config["value"])
+            # Uses 'tier_name' exactly as defined in your create_tables schema
+            self.cursor.execute('''
+                INSERT INTO market (tier_name, current_price)
+                VALUES (?, ?)
+                ON CONFLICT(tier_name) DO NOTHING
+            ''', (tier_name, base_price))
+        self.conn.commit()
+        
 
     def create_tables(self):
         self.cursor.execute('''
