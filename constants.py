@@ -4,7 +4,7 @@ FISH_DATA = {
     "Cringe 😬": {
         "value": 5,
         "species": ["Skibidi Salmon", "Discord Modfish", "Fedora Carp", "Brainrot Bass", "UwUfish"],
-        "gif": "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbXN6cmM3MmswOWY4ZDJ4N2Zpd2txY2c5ZTN1MGptcnU3Y3drdmJveCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3ELtfmA4Apkju/giphy.gif"
+        "gif": "https://cdn.discordapp.com/attachments/1112776516460347433/1524463913461223524/ac2573a1fd5cf32e107c18a4b240e725.gif?ex=6a507fe8&is=6a4f2e68&hm=3e1a10dbced9a83c71201fdf101b006b24d71d5034916838948e297d0909c977&"
     },
     "Bozo ⚪": {
         "value": 10,
@@ -14,7 +14,7 @@ FISH_DATA = {
     "Clown 🤡": {
         "value": 15,
         "species": ["Clownfish", "Squeaky Puffer", "Honking Shark", "Juggling Eel"],
-        "gif": "https://media.giphy.com/media/100QoSU9uTFU64/giphy.gif"
+        "gif": "https://cdn.discordapp.com/attachments/1112776516460347433/1524462773306921100/toontown-clown-fish.gif?ex=6a507ed8&is=6a4f2d58&hm=c9d0be378ef41c56f59db66def6bc5b581837796487cc9fa821357574dd1748a&"
     },
     "Common 🔘": {
         "value": 25,
