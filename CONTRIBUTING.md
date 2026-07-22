@@ -44,7 +44,7 @@ cd Discord-game-bot
 echo "DISCORD_TOKEN=your_token_here" > .env
 
 # Install dependencies and run
-uv run main.py
+uv run code/main.py
 ```
 
 ### Installing Development Dependencies
@@ -66,13 +66,13 @@ This project follows a strict **3-Tier Architecture**:
 ```
 ┌─────────────────────────────────────┐
 │  Interface Layer (Cogs)             │
-│  commands.py, market.py, shop.py... │
+│  code/commands.py, code/market.py.. │
 ├─────────────────────────────────────┤
 │  Business Logic Layer (Engines)     │
-│  engines/*.py                       │
+│  code/engines/*.py                  │
 ├─────────────────────────────────────┤
 │  Data Access Layer                  │
-│  database.py                        │
+│  code/database.py                   │
 └─────────────────────────────────────┘
 ```
 

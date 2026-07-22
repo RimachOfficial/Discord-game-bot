@@ -28,45 +28,46 @@ uv run pre-commit install
 
 ```bash
 # Run the bot directly
-uv run main.py
+uv run code/main.py
 ```
 
 ## Code Quality
 
 ```bash
 # Lint
-uv run ruff check .
+uv run ruff check code/
 
 # Format
-uv run ruff format .
+uv run ruff format code/
 
 # Test
-uv run pytest -v
+uv run pytest code/tests/ -v
 
 # Type check
-uv run mypy . --ignore-missing-imports
+uv run mypy code/ --ignore-missing-imports
 ```
 
 ## Project Structure
 
 ```
 .
-├── main.py                 # Bot entry point
-├── commands.py             # Fishing commands cog
-├── market.py               # Market commands + price loop
-├── inventory.py            # Inventory commands
-├── karma_system.py         # Karma commands
-├── shop.py                 # Shop commands
-├── crew.py                 # Crew commands + paycheck loop
-├── database.py             # Data access layer (SQLite)
-├── constants.py            # Game data & configuration
-├── engines/                # Business logic layer
-│   ├── fishing_engine.py
-│   ├── market_engine.py
-│   ├── economy_engine.py
-│   ├── item_engine.py
-│   ├── crew_engine.py
-│   └── market_chart_engine.py
-├── tests/                  # Test suite
+├── code/                   # All source code
+│   ├── main.py             # Bot entry point
+│   ├── commands.py         # Fishing commands cog
+│   ├── market.py           # Market commands + price loop
+│   ├── inventory.py        # Inventory commands
+│   ├── karma_system.py     # Karma commands
+│   ├── shop.py             # Shop commands
+│   ├── crew.py             # Crew commands + paycheck loop
+│   ├── database.py         # Data access layer (SQLite)
+│   ├── constants.py        # Game data & configuration
+│   ├── engines/            # Business logic layer
+│   ├── tests/              # Test suite
+│   └── documentation.md    # Developer documentation
 ├── docs/                   # Documentation
-└── .github/                # GitHub templates & CI
+├── scripts/                # Utility scripts
+├── .github/                # GitHub templates & CI
+├── Dockerfile              # Docker build
+├── docker-compose.yml      # Docker compose
+├── pyproject.toml           # Project config & dependencies
+└── README.md               # This file

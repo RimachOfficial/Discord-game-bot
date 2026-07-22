@@ -12,10 +12,11 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 
 # Copy source code
-COPY . .
+COPY code/ ./code/
+COPY .env.example ./
 
 # Create .env from example (user must edit)
 RUN cp .env.example .env 2>/dev/null || true
 
 # Run the bot
-CMD ["uv", "run", "main.py"]
+CMD ["uv", "run", "code/main.py"]

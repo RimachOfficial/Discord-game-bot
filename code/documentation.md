@@ -65,16 +65,16 @@ Stores player ownership states, active rosters, and unlock/level tiers for passi
 
 When a user types `/fish`, a tier is selected based on the following weighted probabilities before rolling a species with equal distribution within that tier:
 
-* **Bozo ⚪:** 35%
-* **Common 🔘:** 25%
-* **Uncommon 🔵:** 15%
-* **El Bozo 🟢:** 10%
-* **Your Mother 🟣:** 8%
-* **Legendary 🟡:** 5%
+* **Correction 2️⃣:** 35%
+* **Warning 1️⃣:** 25%
+* **Warning 2️⃣:** 15%
+* **Warning 3️⃣:** 10%
+* **Temporary Ban 1️⃣:** 8%
+* **Temporary Ban 2️⃣:** 5%
 * **Rimach 🔴:** 1.5%
-* **Gay 🌈:** 0.4%
-* **Divine ⚪🟣:** 0.09%
-* **God ✨:** 0.01%
+* **P-Ban 1️⃣:** 0.4%
+* **P-Ban 2️⃣:** 0.09%
+* **P-Ban 3️⃣:** 0.01%
 
 ### 2. Natural Market Fluctuations
 

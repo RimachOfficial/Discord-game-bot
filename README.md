@@ -29,7 +29,7 @@ Bipbob is a **heavily economy-driven Discord fishing simulator** where nothing i
 ## ✨ Features
 
 ### 🎣 Dynamic Fishing
-- **12 rarity tiers** — from `Bozo ⚪` to `God ✨`
+- **12 rarity tiers** — from `Correction 1️⃣` to `P-Ban 3️⃣`
 - **Karma system** — release fish for permanent luck boosts to rare tiers
 - **Passive item modifiers** — change your drop rates with black market gear
 
@@ -42,14 +42,14 @@ Bipbob is a **heavily economy-driven Discord fishing simulator** where nothing i
 ### 🏪 Black Market Items
 | Item | Type | Effect |
 |------|------|--------|
-| 🍼 Copium Inhaler | Consumable | 1% chance for God tier on next cast |
+| 🍼 Copium Inhaler | Consumable | 1% chance for P-Ban 3️⃣ on next cast |
 | 🧼 Gamer Girl Bathwater | Lure | Next 3 catches from rare tiers only |
 | 🔋 Car Battery | Consumable | Pull 15 fish instantly (costs 50 karma) |
 | 📄 Tax Evasion Manual | Passive | Sell without crashing the market |
 | 📱 Bogdanoff's Burner Phone | Consumable | 3x market crash on sell |
 | 💳 Mommy's Credit Card | Passive | Buy without price surge |
-| ♻️ Discord Mod Application | Passive | Blocks Wet Cardboard, doubles Bozo |
-| 🧢 Boyfriend Repellent | Passive | Blocks Common tier entirely |
+| ♻️ Discord Mod Application | Passive | Blocks Wet Cardboard, doubles Correction 2️⃣ |
+| 🧢 Boyfriend Repellent | Passive | Blocks Warning 1️⃣ tier entirely |
 
 ### 👥 Idle Crew Operations
 - Hire 6 unique crew members with **real player-inspired lore**
@@ -125,7 +125,7 @@ cd Discord-game-bot
 echo "DISCORD_TOKEN=your_token_here" > .env
 
 # Run (uv handles everything — venv + deps + execution)
-uv run main.py
+uv run code/main.py
 ```
 
 > ⚠️ **Never commit your `.env` file!** It's already in `.gitignore`.
@@ -154,20 +154,20 @@ This project adheres to a strict **3-Tier Architecture**:
 ```
 ┌──────────────────────────────────────┐
 │      INTERFACE LAYER (Cogs)         │
-│  commands.py · market.py · shop.py  │
-│  inventory.py · karma_system.py     │
-│  crew.py                            │
+│  code/commands.py · code/market.py  │
+│  code/shop.py · code/inventory.py   │
+│  code/karma_system.py · code/crew.py│
 ├──────────────────────────────────────┤
 │      BUSINESS LOGIC (Engines)       │
-│  engines/fishing_engine.py          │
-│  engines/market_engine.py           │
-│  engines/economy_engine.py          │
-│  engines/item_engine.py             │
-│  engines/crew_engine.py             │
-│  engines/market_chart_engine.py     │
+│  code/engines/fishing_engine.py     │
+│  code/engines/market_engine.py      │
+│  code/engines/economy_engine.py     │
+│  code/engines/item_engine.py        │
+│  code/engines/crew_engine.py        │
+│  code/engines/market_chart_engine.py│
 ├──────────────────────────────────────┤
 │      DATA ACCESS (Database)         │
-│  database.py                        │
+│  code/database.py                   │
 │  (Pure SQLite CRUD — zero logic)    │
 └──────────────────────────────────────┘
 ```
@@ -211,7 +211,7 @@ git clone https://github.com/RimachOfficial/Discord-game-bot.git
 cd Discord-game-bot
 uv sync
 uv run pre-commit install
-uv run main.py
+uv run code/main.py
 ```
 
 ---

@@ -18,14 +18,14 @@ cp .env.example .env
 # Edit .env with your DISCORD_TOKEN
 
 # Run
-uv run main.py
+uv run code/main.py
 ```
 
 For persistent hosting, use `tmux` or `screen`:
 
 ```bash
 tmux new -s fishing-bot
-uv run main.py
+uv run code/main.py
 # Ctrl+B, D to detach
 ```
 
@@ -79,7 +79,7 @@ After=network.target
 Type=simple
 User=your-user
 WorkingDirectory=/path/to/Discord-game-bot
-ExecStart=/usr/local/bin/uv run main.py
+ExecStart=/usr/local/bin/uv run code/main.py
 Restart=always
 RestartSec=10
 

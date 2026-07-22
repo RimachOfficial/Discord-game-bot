@@ -1,15 +1,15 @@
-import discord
+import sys
 import os
+from pathlib import Path
+
+# Ensure the 'code' directory is on the Python path
+sys.path.insert(0, str(Path(__file__).parent.resolve()))
+
+import discord
 from dotenv import load_dotenv
 from discord.ext import commands
 from database import DatabaseManager
-import sys
 import io
-
-# Force Windows console to support emojis and complex unicode strings
-#if sys.platform == "win32":
-#    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-#    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 
 # 1. Load the secret token
@@ -37,7 +37,7 @@ class BipbobBot(commands.Bot):
         print("✅ Loaded extension: karma_system")
         await self.load_extension("shop")
         print("✅ Loaded extension: shop")
-        await bot.load_extension("crew")
+        await self.load_extension("crew")
         print("✅ Loaded extension: Crews")
         # Sync the slash commands globally
         try:

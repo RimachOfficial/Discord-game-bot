@@ -5,11 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-07-22
+
+### Changed
+- **Tier names re-themed** to align with Code of Conduct Enforcement Guidelines:
+  - `Cringe 😬` → `Correction 1️⃣`
+  - `Bozo ⚪` → `Correction 2️⃣`
+  - `Clown 🤡` → `Correction 3️⃣`
+  - `Common 🔘` → `Warning 1️⃣`
+  - `Uncommon 🔵` → `Warning 2️⃣`
+  - `El Bozo 🟢` → `Warning 3️⃣`
+  - `Your Mother 🟣` → `Temporary Ban 1️⃣`
+  - `Legendary 🟡` → `Temporary Ban 2️⃣`
+  - `Gay 🌈` → `P-Ban 1️⃣`
+  - `Divine ⚪🟣` → `P-Ban 2️⃣`
+  - `God ✨` → `P-Ban 3️⃣`
+  - `Rimach 🔴` — kept unchanged
+- **All source code moved** from root to `code/` directory:
+  - `code/main.py`, `code/commands.py`, `code/constants.py`, etc.
+  - `code/engines/*.py` — business logic layer
+  - `code/tests/*.py` — test suite
+- Updated all documentation, CI, Dockerfile, and setup scripts to reflect directory restructuring
+
+### Added
+- `code/__init__.py` for proper Python package structure
+- `sys.path` auto-configuration in `main.py` for seamless imports
+
 ## [0.1.0] - 2026-07-22
 
 ### Added
 - Initial release of the Discord Fishing Bot
-- Core fishing mechanic with 12 rarity tiers (Bozo ⚪ to God ✨)
+- Core fishing mechanic with 12 rarity tiers (Correction 1️⃣ to P-Ban 3️⃣)
 - Dynamic market economy with live price fluctuations every 5 minutes
 - Supply & demand slippage system (mass selling crashes prices, mass buying surges them)
 - Karma system: release fish for permanent luck boosts
