@@ -225,3 +225,9 @@ __marimo__/
 
 #User
 *.png
+
+# Docker data volume (local database persistence)
+data/
+
+# Generated market chart images
+market_trend.png
