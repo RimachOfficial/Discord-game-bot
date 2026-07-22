@@ -153,22 +153,22 @@ This project adheres to a strict **3-Tier Architecture**:
 
 ```
 ┌──────────────────────────────────────┐
-│      INTERFACE LAYER (Cogs)         │
-│  commands.py · market.py · shop.py  │
-│  inventory.py · karma_system.py     │
-│  crew.py                            │
+│      INTERFACE LAYER (Cogs)          │
+│  commands.py · market.py · shop.py   │
+│  inventory.py · karma_system.py      │
+│  crew.py                             │
 ├──────────────────────────────────────┤
-│      BUSINESS LOGIC (Engines)       │
-│  engines/fishing_engine.py          │
-│  engines/market_engine.py           │
-│  engines/economy_engine.py          │
-│  engines/item_engine.py             │
-│  engines/crew_engine.py             │
-│  engines/market_chart_engine.py     │
+│      BUSINESS LOGIC (Engines)        │
+│  engines/fishing_engine.py           │
+│  engines/market_engine.py            │
+│  engines/economy_engine.py           │
+│  engines/item_engine.py              │
+│  engines/crew_engine.py              │
+│  engines/market_chart_engine.py      │
 ├──────────────────────────────────────┤
-│      DATA ACCESS (Database)         │
-│  database.py                        │
-│  (Pure SQLite CRUD — zero logic)    │
+│      DATA ACCESS (Database)          │
+│  database.py                         │
+│  (Pure SQLite CRUD — zero logic)     │
 └──────────────────────────────────────┘
 ```
 
