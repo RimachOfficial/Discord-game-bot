@@ -9,7 +9,6 @@ import discord
 from dotenv import load_dotenv
 from discord.ext import commands
 from database import DatabaseManager
-import io
 
 
 # 1. Load the secret token

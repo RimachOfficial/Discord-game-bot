@@ -1,6 +1,4 @@
-import random
 from engines import fishing_engine
-from constants import FISH_TIERS, FISH_WEIGHTS, FISH_DATA
 
 def execute_car_battery(current_karma: list[tuple[str, float]]) -> dict:
     """

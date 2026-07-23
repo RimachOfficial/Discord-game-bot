@@ -15,9 +15,7 @@ class CrewRecruitDropdown(discord.ui.Select):
         
         
         options = []
-        # Gather live prices to show realistic expectations on the dropdown menu
-        market_prices = dict(self.db.get_market_prices())
-        
+
         for crew_name, details in CREW_CATALOG.items():
             current_level = self.db.get_crew_level(user_id, crew_name)
             upgrade_info = crew_engine.get_upgrade_details(crew_name, current_level)
@@ -93,7 +91,7 @@ class CrewCog(commands.Cog):
     # ------------------------------------------------------------------
     @tasks.loop(minutes=MINUTES_OF_UPDATE)
     async def passive_income_loop(self):
-        print(f"💼 Recalculating crew paychecks against live stock valuations...")
+        print("💼 Recalculating crew paychecks against live stock valuations...")
         try:
             all_crew_data = self.db.get_all_active_crew()
             market_prices = dict(self.db.get_market_prices())
@@ -125,7 +123,7 @@ class CrewCog(commands.Cog):
             for user_id, total_cash_earned in payouts.items():
                 if total_cash_earned > 0:
                     self.db.update_player_cash(user_id, round(total_cash_earned, 2))
-            print(f"✅ Live market-indexed payroll processing complete.")
+            print("✅ Live market-indexed payroll processing complete.")
         except Exception as e:
             print(f"❌ Error in stock evaluation loop: {e}")
 

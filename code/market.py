@@ -1,7 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
-from constants import FISH_DATA, FISH_TO_TIER
+from constants import FISH_DATA
 from engines import market_engine
 import engines.market_chart_engine
 import time
@@ -271,7 +271,8 @@ class MarketCommands(commands.Cog):
             species_counts = Counter(bought_species)
         
         for species_name, count in species_counts.items():
-            if count <= 0: continue
+            if count <= 0:
+                continue
             self.db.cursor.execute(
                 """
                 INSERT INTO inventory (user_id, fish_tier, quantity) VALUES (?, ?, ?)

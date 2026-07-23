@@ -1,5 +1,4 @@
 import random
-import math
 from constants import FISH_DATA
 
 chance_to_trigger_shock: float = 0.15  # chance per market update loop
