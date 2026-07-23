@@ -153,24 +153,22 @@ This project adheres to a strict **3-Tier Architecture**:
 
 ```
 ┌──────────────────────────────────────┐
-<<<<<<< HEAD
-│      INTERFACE LAYER (Cogs)         │
-│  code/commands.py · code/market.py  │
-│  code/shop.py · code/inventory.py   │
-│  code/karma_system.py · code/crew.py│
+│      INTERFACE LAYER (Cogs)          │
+│  code/commands.py · code/market.py   │
+│  code/shop.py · code/inventory.py    │
+│  code/karma_system.py · code/crew.py │
 ├──────────────────────────────────────┤
-│      BUSINESS LOGIC (Engines)       │
-│  code/engines/fishing_engine.py     │
-│  code/engines/market_engine.py      │
-│  code/engines/economy_engine.py     │
-│  code/engines/item_engine.py        │
-│  code/engines/crew_engine.py        │
-│  code/engines/market_chart_engine.py│
+│      BUSINESS LOGIC (Engines)        │
+│  code/engines/fishing_engine.py      │
+│  code/engines/market_engine.py       │
+│  code/engines/economy_engine.py      │
+│  code/engines/item_engine.py         │
+│  code/engines/crew_engine.py         │
+│  code/engines/market_chart_engine.py │
 ├──────────────────────────────────────┤
-│      DATA ACCESS (Database)         │
-│  code/database.py                   │
-│  (Pure SQLite CRUD — zero logic)    │
-=======
+│      DATA ACCESS (Database)          │
+│  code/database.py                    │
+│  (Pure SQLite CRUD — zero logic)     │
 │      INTERFACE LAYER (Cogs)          │
 │  commands.py · market.py · shop.py   │
 │  inventory.py · karma_system.py      │
@@ -187,7 +185,6 @@ This project adheres to a strict **3-Tier Architecture**:
 │      DATA ACCESS (Database)          │
 │  database.py                         │
 │  (Pure SQLite CRUD — zero logic)     │
->>>>>>> acd7f462be6213052b9773bda8fd9a5471d08921
 └──────────────────────────────────────┘
 ```
 
