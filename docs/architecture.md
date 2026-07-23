@@ -3,15 +3,15 @@
 Bipbob follows a strict **3-Tier Architecture (Separation of Concerns)**:
 
 ```
-┌──────────────────────────────────────────────────┐
-│                INTERFACE LAYER                   │
-│  (Discord Cogs — code/commands.py, ...)          │
+┌───────────────────────────────────────────────────┐
+│                INTERFACE LAYER                    │
+│  (Discord Cogs — code/commands.py, ...)           │
 │                                                   │
 │  • Parses Discord slash commands & interactions   │
 │  • Formats responses as Discord Embeds            │
 │  • Delegates all logic to engines                 │
 │  • Zero math, zero game logic                     │
-├──────────────────────────────────────────────────┤
+├───────────────────────────────────────────────────┤
 │              BUSINESS LOGIC LAYER                 │
 │  (Engines — code/engines/*.py)                    │
 │                                                   │
@@ -21,14 +21,14 @@ Bipbob follows a strict **3-Tier Architecture (Separation of Concerns)**:
 │  • item_engine.py: item effects & purchases       │
 │  • crew_engine.py: crew leveling & payroll math   │
 │  • market_chart_engine.py: matplotlib chart gen   │
-├──────────────────────────────────────────────────┤
+├───────────────────────────────────────────────────┤
 │               DATA ACCESS LAYER                   │
 │  (code/database.py)                               │
 │                                                   │
 │  • Pure SQLite CRUD operations                    │
 │  • No business logic, no math, no item configs    │
 │  • Serves as a clean abstraction layer            │
-└──────────────────────────────────────────────────┘
+└───────────────────────────────────────────────────┘
 ```
 
 ## Data Flow
