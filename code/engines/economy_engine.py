@@ -11,7 +11,7 @@ def get_net_worth_status(total_net_worth: int) -> str:
     else:
         return "Hobbyist Fisherman"
 
-def calculate_portfolio(wallet_cash: int, user_inv: list[tuple[str, int]], market_prices_dict: dict) -> dict:
+def calculate_portfolio(wallet_cash: float, user_inv: list[tuple[str, int]], market_prices_dict: dict) -> dict:
     """Calculates the total value of the player's wallet and assets."""
     inventory_value = 0
     

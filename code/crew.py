@@ -26,10 +26,10 @@ class CrewRecruitDropdown(discord.ui.Select):
                 desc_prefix = f"Lv. {current_level} (Employed)"
             elif user_cash >= price:
                 emoji = "✅"
-                desc_prefix = f"${price:.2f} | Hire Now!"
+                desc_prefix = f"${price:,.2f} | Hire Now!"
             else:
                 emoji = "❌"
-                desc_prefix = f"${price:.2f} | Low Funds"
+                desc_prefix = f"${price:,.2f} | Low Funds"
 
             options.append(discord.SelectOption(
                 label=crew_name,
@@ -60,7 +60,7 @@ class CrewRecruitDropdown(discord.ui.Select):
         
         if current_cash < details["next_cost"]:
             await interaction.followup.send(
-                f"❌ You don't have enough cash! Recruiting **{selected_crew}** costs `${details['next_cost']:.2f}`, but you only have `${current_cash:.2f}`.", 
+                f"❌ You don't have enough cash! Recruiting **{selected_crew}** costs `${details['next_cost']:,.2f}`, but you only have `${current_cash:,.2f}`.", 
                 ephemeral=True
             )
             return
@@ -219,7 +219,7 @@ class CrewCog(commands.Cog):
         
         if user_cash < details["next_cost"]:
             await interaction.followup.send(
-                f"❌ Low funds! You need `${details['next_cost']:.2f}` to upgrade **{crew_name}**, but you only have `${user_cash:.2f}`.",
+                f"❌ Low funds! You need `${details['next_cost']:,.2f}` to upgrade **{crew_name}**, but you only have `${user_cash:,.2f}`.",
                 ephemeral=True
             )
             return

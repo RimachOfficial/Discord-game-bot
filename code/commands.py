@@ -13,7 +13,7 @@ class FishingCommands(commands.Cog):
         self.db = bot.db
     
     @app_commands.command(name="fish", description="Cast your line into the water!")
-    @app_commands.checks.cooldown(10, 30.0, key=lambda i: i.user.id)
+    @app_commands.checks.cooldown(1, 30.0, key=lambda i: i.user.id)
     async def fish(self, interaction: discord.Interaction):
         await interaction.response.defer()
         user_id = str(interaction.user.id)
@@ -74,8 +74,8 @@ class FishingCommands(commands.Cog):
             ),
             color=discord.Color.teal()
         )
-        embed.add_field(name="💵 Live Market Price", value=f"`${current_market_price:.2f}` ({trend})", inline=True)
-        embed.add_field(name="🏛️ Base Value", value=f"`${base_price:.2f}`", inline=True)
+        embed.add_field(name="💵 Live Market Price", value=f"`${current_market_price:,.2f}` ({trend})", inline=True)
+        embed.add_field(name="🏛️ Base Value", value=f"`${base_price:,.2f}`", inline=True)
         embed.set_image(url=FISH_DATA[tier]["gif"])
         
         await interaction.followup.send(embed=embed)
@@ -90,7 +90,7 @@ class FishingCommands(commands.Cog):
             
         embed = discord.Embed(title="🏆 Wealthiest Fishermen 🏆", color=discord.Color.gold())
         for index, (name, wealth) in enumerate(top_players, start=1):
-            embed.add_field(name=f"#{index} {name}", value=f"💰 ${wealth:.2f}", inline=False)
+            embed.add_field(name=f"#{index} {name}", value=f"💰 ${wealth:,.2f}", inline=False)
             
         await interaction.response.send_message(embed=embed)
 
@@ -240,7 +240,7 @@ class FishingCommands(commands.Cog):
             description=f"You dumped **{result['total_fish_sold']:.2f}** fish onto the market!",
             color=discord.Color.green()
         )
-        embed.add_field(name="Total Cash Earned", value=f"`${result['total_payout']:.2f}`", inline=False)
+        embed.add_field(name="Total Cash Earned", value=f"`${result['total_payout']:,.2f}`", inline=False)
         
         if result["impacted_tiers_text"] and not has_tax_evasion:
             embed.add_field(name="📉 Market Damage Caused", value="\n".join(result["impacted_tiers_text"]), inline=False)

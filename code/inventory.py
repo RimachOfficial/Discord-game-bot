@@ -52,8 +52,8 @@ class InventoryCommands(commands.Cog):
                 field_content += (
                     f"**{name}**\n"
                     f"└ x{qty}\n"
-                    f"   • Mkt: `💰${market_w:.2f}`\n"
-                    f"   • Base: `🏛️${base_w:.2f}`\n\n"
+                    f"   • Mkt: `💰${market_w:,.2f}`\n"
+                    f"   • Base: `🏛️${base_w:,.2f}`\n\n"
                 )
             
             embed.add_field(
@@ -64,9 +64,9 @@ class InventoryCommands(commands.Cog):
             
         profit_loss_color = "🟢" if total_market_value >= total_base_value else "🔴"
         embed.description = (
-            f"📈 **Live Market Worth:** **${total_market_value:.2f}**\n"
-            f"🏛️ **Static Base Worth:** `${total_base_value:.2f}`\n"
-            f"{profit_loss_color} **Market Performance:** `{(total_market_value - total_base_value):+.2f}` compared to base values.\n"
+            f"📈 **Live Market Worth:** **${total_market_value:,.2f}**\n"
+            f"🏛️ **Static Base Worth:** `${total_base_value:,.2f}`\n"
+            f"{profit_loss_color} **Market Performance:** `{(total_market_value - total_base_value):+,.2f}` compared to base values.\n"
         )
             
         from constants import ITEM_CATALOG

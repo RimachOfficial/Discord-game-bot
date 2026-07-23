@@ -10,9 +10,8 @@ from datetime import datetime
 
 def generate_and_save_market_chart(db_manager) -> str:
     """
-    Directly reads your existing database tables to generate a macro 
-    trend stock chart dashboard that auto-scales dynamically based on 
-    the total number of active tiers.
+    Reads database tables to generate a macro trend stock chart dashboard
+    that auto-scales dynamically based on the total number of active tiers.
     """
     prices = dict(db_manager.get_market_prices())
     if not prices:
@@ -83,7 +82,7 @@ def generate_and_save_market_chart(db_manager) -> str:
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
         
         # Auto-adjust X-axis label spacing depending on layout column density
-        ax.xaxis.set_major_locator(ticker.MaxNLocator(3 if ncols >= 4 else 4)) # <--- Fixed this line
+        ax.xaxis.set_major_locator(ticker.MaxNLocator(3 if ncols >= 4 else 4))
         ax.tick_params(axis='both', which='major', labelsize=8)
         ax.grid(True, linestyle=":", alpha=0.15)
         ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f"${x:,.0f}" if x < 1e6 else f"${x:.1e}"))
