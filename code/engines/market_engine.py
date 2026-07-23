@@ -32,16 +32,16 @@ def generate_market_shock() -> dict | None:
     """Generates a random market shock event. Returns event dict or None."""
     if random.random() < chance_to_trigger_shock:
         return random.choice([
-            {"msg": "⚠️ **ANCHOVY INFLATION!** Low tier fish prices skyrocketed!", "tier": "Correction 2️⃣", "mult": 1.8},
-            {"msg": "🐋 **WHALE CONSERVATION ACT!** 'Temporary Ban' prices doubled!", "tier": "Temporary Ban 1️⃣", "mult": 2.0},
+            {"msg": "⚠️ **ANCHOVY INFLATION!** Low tier fish prices skyrocketed!", "tier": "Uncommon 🟢", "mult": 1.8},
+            {"msg": "🐋 **WHALE CONSERVATION ACT!** Exceptional tier prices doubled!", "tier": "Exceptional 🟤", "mult": 2.0},
             {"msg": "🦈 **SHARK WEEK!** Apex predators are in high demand!", "tier": "Rimach 🔴", "mult": 2.2},
-            {"msg": "🦠 **RED TIDE OUTBREAK!** Common populations decimated, prices surging!", "tier": "Warning 1️⃣", "mult": 1.6},
-            {"msg": "👼 **CULT AWAKENING!** Fanatics are hoarding P-Ban fish! Prices to the moon!", "tier": "P-Ban 3️⃣", "mult": 2.5},
-            {"msg": "💎 **BILLIONAIRE CRAZE!** P-Ban fish are the new luxury status symbol!", "tier": "P-Ban 2️⃣", "mult": 2.1},
-            {"msg": "📉 **CRYPTO CRASH!** Rich players panic-selling P-Ban fish!", "tier": "P-Ban 3️⃣", "mult": 0.4},
-            {"msg": "🗑️ **GREAT GARBAGE PATCH!** The waters are flooded with trash! Correction prices tanking!", "tier": "Correction 2️⃣", "mult": 0.5},
-            {"msg": "🎣 **OVERFISHING!** The market is flooded with Warning-tier fish! Prices plummeting!", "tier": "Warning 1️⃣", "mult": 0.6},
-            {"msg": "🚫 **PIRATE RAID!** Black market fish dumps are crashing the Temporary Ban tier!", "tier": "Temporary Ban 2️⃣", "mult": 0.5},
+            {"msg": "🦠 **RED TIDE OUTBREAK!** Remarkable populations decimated, prices surging!", "tier": "Remarkable 🟠", "mult": 1.6},
+            {"msg": "👼 **CULT AWAKENING!** Fanatics are hoarding Legendary fish! Prices to the moon!", "tier": "Legendary 👑", "mult": 2.5},
+            {"msg": "💎 **BILLIONAIRE CRAZE!** Elite fish are the new luxury status symbol!", "tier": "Elite 💎", "mult": 2.1},
+            {"msg": "📉 **CRYPTO CRASH!** Rich players panic-selling Legendary fish!", "tier": "Legendary 👑", "mult": 0.4},
+            {"msg": "🗑️ **GREAT GARBAGE PATCH!** The waters are flooded with trash! Uncommon prices tanking!", "tier": "Uncommon 🟢", "mult": 0.5},
+            {"msg": "🎣 **OVERFISHING!** The market is flooded with Remarkable-tier fish! Prices plummeting!", "tier": "Remarkable 🟠", "mult": 0.6},
+            {"msg": "🚫 **PIRATE RAID!** Black market fish dumps are crashing the Strange tier!", "tier": "Strange 💠", "mult": 0.5},
             {"msg": "🧪 **LAB GROWN MEAT!** Fake shark fin soup is crashing the Rimach market!", "tier": "Rimach 🔴", "mult": 0.4}
         ])
     return None

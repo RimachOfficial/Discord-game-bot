@@ -19,26 +19,26 @@ class TestCalculateDynamicWeights:
         for i, w in enumerate(weights):
             assert w == pytest.approx(FISH_WEIGHTS[i], rel=0.01)
 
-    def test_mod_app_doubles_bozo(self):
-        """Discord Mod Application should double Correction 2️⃣ weight."""
+    def test_mod_app_doubles_uncommon(self):
+        """Discord Mod Application should double Uncommon 🟢 weight."""
         raw_karma = {}
         weights = calculate_dynamic_weights(raw_karma, True, False)
-        bozo_idx = FISH_TIERS.index("Correction 2️⃣")
+        bozo_idx = FISH_TIERS.index("Uncommon 🟢")
         base_bozo = FISH_WEIGHTS[bozo_idx]
         assert weights[bozo_idx] == pytest.approx(base_bozo * 2.0, rel=0.01)
 
-    def test_bf_repellent_blocks_common(self):
-        """Boyfriend Repellent should set Warning 1️⃣ weight to zero."""
+    def test_bf_repellent_blocks_remarkable(self):
+        """Boyfriend Repellent should set Remarkable 🟠 weight to zero."""
         raw_karma = {}
         weights = calculate_dynamic_weights(raw_karma, False, True)
-        common_idx = FISH_TIERS.index("Warning 1️⃣")
+        common_idx = FISH_TIERS.index("Remarkable 🟠")
         assert weights[common_idx] == 0.0
 
     def test_karma_increases_weight(self):
         """Karma should increase the weight of the associated tier."""
-        raw_karma = {"P-Ban 3️⃣": 500.0}  # 500 karma = 5% bonus
+        raw_karma = {"Legendary 👑": 500.0}  # 500 karma = 5% bonus
         weights = calculate_dynamic_weights(raw_karma, False, False)
-        god_idx = FISH_TIERS.index("P-Ban 3️⃣")
+        god_idx = FISH_TIERS.index("Legendary 👑")
         assert weights[god_idx] > FISH_WEIGHTS[god_idx]
 
 
@@ -53,10 +53,10 @@ class TestRollFish:
         assert result["exact_catch_pct"] > 0
 
     def test_gamer_girl_restricts_tiers(self):
-        """Gamer Girl Bathwater should restrict catches to Temporary Ban 1️⃣ and P-Ban 1️⃣."""
+        """Gamer Girl Bathwater should restrict catches to Exceptional 🟤 and Master 🏆."""
         for _ in range(50):
             result = roll_fish({}, False, False, False, has_gamer_girl=True)
-            assert result["tier"] in ["Temporary Ban 1️⃣", "P-Ban 1️⃣"]
+            assert result["tier"] in ["Exceptional 🟤", "Master 🏆"]
 
 
 class TestCalculateCatchProbabilities:

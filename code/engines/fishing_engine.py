@@ -12,10 +12,10 @@ def calculate_dynamic_weights(raw_karma: dict, has_mod_app: bool, has_bf_repelle
         adjusted_weight = base_weight * (1 + (luck_bonus_pct / 100.0))
         
         # Apply Passives
-        if has_mod_app and tier == "Correction 2️⃣":
-            adjusted_weight *= 2.0  # Doubles Correction 2️⃣ chance as a penalty
-        if has_bf_repellent and tier == "Warning 1️⃣":
-            adjusted_weight = 0.0   # Blocks Warning 1️⃣ completely
+        if has_mod_app and tier == "Uncommon 🟢":
+            adjusted_weight *= 2.0  # Doubles Uncommon 🟢 chance as a penalty
+        if has_bf_repellent and tier == "Remarkable 🟠":
+            adjusted_weight = 0.0   # Blocks Remarkable 🟠 completely
             
         dynamic_weights.append(adjusted_weight)
     return dynamic_weights
@@ -37,7 +37,7 @@ def calculate_catch_probabilities(tier: str, dynamic_weights: list[float], has_c
     
     # If Gamer Girl Bathwater is active, chances are strictly 50/50 for the two tiers
     if has_gamer_girl:
-        if tier in ["Temporary Ban 1️⃣", "P-Ban 1️⃣"]:
+        if tier in ["Exceptional 🟤", "Master 🏆"]:
             exact_catch_pct = (0.50 / species_in_tier) * 100
         else:
             exact_catch_pct = 0.0
@@ -48,7 +48,7 @@ def calculate_catch_probabilities(tier: str, dynamic_weights: list[float], has_c
     
     if has_copium:
         # Flat 1% safety net added to their natural karma chance
-        if tier == "P-Ban 3️⃣":
+        if tier == "Legendary 👑":
             tier_probability = 0.01 + (0.99 * tier_probability)
         else:
             tier_probability = 0.99 * tier_probability
@@ -62,11 +62,11 @@ def roll_fish(raw_karma: dict, has_mod_app: bool, has_bf_repellent: bool, has_co
     
     # Determine the tier
     if has_gamer_girl:
-        tier = random.choice(["Temporary Ban 1️⃣", "P-Ban 1️⃣"])
+        tier = random.choice(["Exceptional 🟤", "Master 🏆"])
     elif has_copium:
         # Flat 1% intercept roll
         if random.random() < 0.01:
-            tier = "P-Ban 3️⃣"
+            tier = "Legendary 👑"
         else:
             # If the 1% fails, roll normally using dynamic_weights (which has their karma)
             tier = random.choices(FISH_TIERS, weights=dynamic_weights, k=1)[0]

@@ -326,7 +326,7 @@ class FishingCommands(commands.Cog):
         # 3. Execute active item logic
         if actual_item_name == "🍼 Copium Inhaler":
             self.db.set_buff(user_id, "copium_active", "1")
-            await interaction.response.send_message("🍼 *huffff* You ripped the Copium Inhaler! Your next `/fish` has a massively boosted chance for `P-Ban 3️⃣` tier.")
+            await interaction.response.send_message("🍼 *huffff* You ripped the Copium Inhaler! Your next `/fish` has a massively boosted chance for `Legendary 👑` tier.")
 
         elif actual_item_name == "📱 Bogdanoff’s Burner Phone":
             self.db.set_buff(user_id, "short_squeeze", "1")
@@ -334,7 +334,7 @@ class FishingCommands(commands.Cog):
             
         elif actual_item_name == "🧼 Gamer Girl Bathwater":
             self.db.set_buff(user_id, "gamer_girl_charges", "3")
-            await interaction.response.send_message("🧼 *glug glug* You drank the Bathwater! Your next 3 catches are guaranteed to be from `Temporary Ban 1️⃣` or `P-Ban 1️⃣`.")
+            await interaction.response.send_message("🧼 *glug glug* You drank the Bathwater! Your next 3 catches are guaranteed to be from `Exceptional 🟤` or `Master 🏆`.")
             
         elif actual_item_name == "🔋 Throw a Car Battery in the Ocean":
             current_karma = self.db.get_player_karma(user_id)
@@ -375,7 +375,7 @@ class FishingCommands(commands.Cog):
         embed.add_field(
             name="🎮 1. The Core Gameplay Loop",
             value=(
-                "• `/fish` : Cast your line to catch fish across 10 rarity tiers (from Correction 1️⃣ to P-Ban 3️⃣).\n"
+                "• `/fish` : Cast your line to catch fish across 12 rarity tiers (from Common ⚪ to Legendary 👑).\n"
                 "• `/inventory` : View your fish stockpile and see how their current value stacks up against base pricing.\n"
                 "• `/balance` : Check your liquid cash versus your total asset net worth. \n\n"
             ),

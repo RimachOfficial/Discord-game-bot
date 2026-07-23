@@ -29,7 +29,7 @@ Bipbob is a **heavily economy-driven Discord fishing simulator** where nothing i
 ## ✨ Features
 
 ### 🎣 Dynamic Fishing
-- **12 rarity tiers** — from `Correction 1️⃣` to `P-Ban 3️⃣`
+- **12 rarity tiers** — from `Common ⚪` to `Legendary 👑`
 - **Karma system** — release fish for permanent luck boosts to rare tiers
 - **Passive item modifiers** — change your drop rates with black market gear
 
@@ -42,14 +42,14 @@ Bipbob is a **heavily economy-driven Discord fishing simulator** where nothing i
 ### 🏪 Black Market Items
 | Item | Type | Effect |
 |------|------|--------|
-| 🍼 Copium Inhaler | Consumable | 1% chance for P-Ban 3️⃣ on next cast |
+| 🍼 Copium Inhaler | Consumable | 1% chance for Legendary 👑 on next cast |
 | 🧼 Gamer Girl Bathwater | Lure | Next 3 catches from rare tiers only |
 | 🔋 Car Battery | Consumable | Pull 15 fish instantly (costs 50 karma) |
 | 📄 Tax Evasion Manual | Passive | Sell without crashing the market |
 | 📱 Bogdanoff's Burner Phone | Consumable | 3x market crash on sell |
 | 💳 Mommy's Credit Card | Passive | Buy without price surge |
-| ♻️ Discord Mod Application | Passive | Blocks Wet Cardboard, doubles Correction 2️⃣ |
-| 🧢 Boyfriend Repellent | Passive | Blocks Warning 1️⃣ tier entirely |
+| ♻️ Discord Mod Application | Passive | Blocks Wet Cardboard, doubles Uncommon 🟢 |
+| 🧢 Boyfriend Repellent | Passive | Blocks Remarkable 🟠 tier entirely |
 
 ### 👥 Idle Crew Operations
 - Hire 6 unique crew members with **real player-inspired lore**
