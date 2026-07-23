@@ -33,6 +33,24 @@ Bipbob is a **heavily economy-driven Discord fishing simulator** where nothing i
 - **Karma system** — release fish for permanent luck boosts to rare tiers
 - **Passive item modifiers** — change your drop rates with black market gear
 
+### 🎣 Fish Tiers
+All 12 rarity tiers, their base values, and the species that inhabit them:
+
+| Tier | Base Value | Notable Species |
+|------|-----------|-----------------|
+| `Common ⚪` | `$5` | Skibidi Salmon, Discord Modfish, Fedora Carp |
+| `Uncommon 🟢` | `$10` | Old Boot, Wet Cardboard, Plastic Bottle |
+| `Unusual 🟡` | `$15` | Clownfish, Squeaky Puffer, Honking Shark |
+| `Remarkable 🟠` | `$25` | Atlantic Cod, River Carp, Pond Tilapia |
+| `Rare 🔵` | `$50` | Sockeye Salmon, Rainbow Trout, Red Snapper |
+| `Outstanding 🟣` | `$100` | Mako Shark, Hammerhead Shark, Sixgill Shark |
+| `Exceptional 🟤` | `$500` | Whale Shark (41,000 lbs — Absolute Unit) |
+| `Strange 💠` | `$1,000` | Pacific/Atlantic/Black Marlin |
+| `Rimach 🔴` | `$5,000` | Greenland Shark, Tiger Shark |
+| `Master 🏆` | `$20,000` | Blobfish 👁️👄👁️, Ocean Sunfish 🐋, Goblin Shark 👺 |
+| `Elite 💎` | `$100,000` | Great White Shark (Alfred Dean Record — 2,664 lbs) |
+| `Legendary 👑` | `$1,000,000` | The Legendary Kraken 🦑, Poseidon's Goldfish 🔱 |
+
 ### 📈 Live Stock Market
 - Prices fluctuate **every 5 minutes** with natural drift
 - **Supply & demand** — mass selling crashes prices, mass buying surges them
@@ -168,22 +186,6 @@ This project adheres to a strict **3-Tier Architecture**:
 ├──────────────────────────────────────┤
 │      DATA ACCESS (Database)          │
 │  code/database.py                    │
-│  (Pure SQLite CRUD — zero logic)     │
-│      INTERFACE LAYER (Cogs)          │
-│  commands.py · market.py · shop.py   │
-│  inventory.py · karma_system.py      │
-│  crew.py                             │
-├──────────────────────────────────────┤
-│      BUSINESS LOGIC (Engines)        │
-│  engines/fishing_engine.py           │
-│  engines/market_engine.py            │
-│  engines/economy_engine.py           │
-│  engines/item_engine.py              │
-│  engines/crew_engine.py              │
-│  engines/market_chart_engine.py      │
-├──────────────────────────────────────┤
-│      DATA ACCESS (Database)          │
-│  database.py                         │
 │  (Pure SQLite CRUD — zero logic)     │
 └──────────────────────────────────────┘
 ```
