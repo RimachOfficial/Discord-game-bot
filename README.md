@@ -12,7 +12,7 @@
 
 ---
 
-**[Features](#-features) • [Commands](#-commands) • [Quick Start](#-quick-start) • [Architecture](#%EF%B8%8F-architecture) • [Contributing](CONTRIBUTING.md) • [Docs](docs/)**
+**[Features](#features) • [Commands](#commands) • [Quick Start](#quick-start) • [Architecture](#architecture) • [Contributing](CONTRIBUTING.md) • [Docs](docs/)**
 
 </div>
 
