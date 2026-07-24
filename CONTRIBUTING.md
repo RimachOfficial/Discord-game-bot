@@ -49,8 +49,10 @@ uv run code/main.py
 
 ### Installing Development Dependencies
 
+Development dependencies are defined in `pyproject.toml` under the `[dependency-groups] dev` section.
+
 ```bash
-uv pip install -r requirements-dev.txt
+uv sync --group dev
 ```
 
 Or install them manually:
