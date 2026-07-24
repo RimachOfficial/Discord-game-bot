@@ -1,6 +1,6 @@
 # Contributing to Bipbob (Discord Game Bot)
 
-First off, thank you for considering contributing! 🎉 Every contribution — whether a bug fix, feature, typo correction, or documentation improvement — is genuinely appreciated.
+First off, thank you for considering contributing! Every contribution — whether a bug fix, feature, typo correction, or documentation improvement — is genuinely appreciated.
 
 ## Table of Contents
 

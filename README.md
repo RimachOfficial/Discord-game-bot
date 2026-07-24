@@ -18,7 +18,7 @@
 
 ---
 
-## 📖 Overview
+## Overview
 
 Bipbob is a **heavily economy-driven Discord fishing simulator** where nothing is static. Fish prices fluctuate like a real stock market, your actions directly impact global pricing, and you can rig the system with illegal black market items. Hire your friends as crew members, manipulate stock trends, and build your net worth.
 
@@ -26,7 +26,7 @@ Bipbob is a **heavily economy-driven Discord fishing simulator** where nothing i
 
 ---
 
-## ✨ Features
+## Features
 
 ### 🎣 Dynamic Fishing
 - **12 rarity tiers** — from `Common ⚪` to `Legendary 👑`
@@ -69,20 +69,20 @@ All 12 rarity tiers, their base values, and the species that inhabit them:
 | ♻️ Discord Mod Application | Passive | Blocks Wet Cardboard, doubles Uncommon 🟢 |
 | 🧢 Boyfriend Repellent | Passive | Blocks Remarkable 🟠 tier entirely |
 
-### 👥 Idle Crew Operations
+### Idle Crew Operations
 - Hire 6 unique crew members with **real player-inspired lore**
 - Each crew member targets **specific fish tiers**
 - Their efficiency fluctuates with **live market prices**
 - Level them up for exponential yield increases
 
-### 🛡️ Anti-Exploit Design
+### Anti-Exploit Design
 - **Slippage pricing** — you're paid the average price across the crash curve
 - **Hard price floors/ceilings** — prevents total market collapse or infinite inflation
 - **Cooldowns** — `/fish` has a 30s cooldown to prevent spam
 
 ---
 
-## 🛠️ Commands
+## Commands
 
 ### Fishing & Karma
 | Command | Description |
@@ -125,7 +125,7 @@ All 12 rarity tiers, their base values, and the species that inhabit them:
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - **[Python](https://python.org) 3.12+**
@@ -135,18 +135,13 @@ All 12 rarity tiers, their base values, and the species that inhabit them:
 ### One-Command Setup
 
 ```bash
-# Clone
 git clone https://github.com/RimachOfficial/Discord-game-bot.git
 cd Discord-game-bot
 
-# Configure your token
 echo "DISCORD_TOKEN=your_token_here" > .env
 
-# Run (uv handles everything — venv + deps + execution)
 uv run code/main.py
 ```
-
-> ⚠️ **Never commit your `.env` file!** It's already in `.gitignore`.
 
 ### Docker Setup
 
@@ -165,7 +160,7 @@ See the **[Installation Guide](docs/deployment/hosting.md)** for:
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 This project adheres to a strict **3-Tier Architecture**:
 
@@ -199,7 +194,7 @@ Each layer has strict responsibilities:
 
 ---
 
-## 🧪 Tech Stack
+## Tech Stack
 
 | Component | Technology |
 |-----------|------------|
@@ -213,7 +208,7 @@ Each layer has strict responsibilities:
 
 ---
 
-## 🫂 Contributing
+## Contributing
 
 **Contributions are welcome!** Check out the [Contributing Guide](CONTRIBUTING.md) for:
 
@@ -234,7 +229,7 @@ uv run code/main.py
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the **MIT License with Attribution** — you are free to use, modify, and distribute the code, provided you credit the original author.
 
@@ -244,7 +239,7 @@ See the [LICENSE](LICENSE) file for details.
 
 <div align="center">
 
-**Built with chaos and ❤️ by [RimachOfficial](https://github.com/RimachOfficial)**
+**Built with chaos by [RimachOfficial](https://github.com/RimachOfficial)**
 
 [![GitHub stars](https://img.shields.io/github/stars/RimachOfficial/Discord-game-bot?style=social)](https://github.com/RimachOfficial/Discord-game-bot/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/RimachOfficial/Discord-game-bot?style=social)](https://github.com/RimachOfficial/Discord-game-bot/network/members)
