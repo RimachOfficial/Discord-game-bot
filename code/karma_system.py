@@ -27,7 +27,7 @@ class KarmaSystem(commands.Cog):
                 tier = FISH_TO_TIER[fish_name]
                 base_val = FISH_DATA[tier]["value"]
                 
-                # Math: Use floats to prevent overflow during calculations
+                # Use floats to prevent overflow during calculations
                 karma_per_fish = max(1.0, float(base_val) / 10.0)
                 total_karma_for_species = karma_per_fish * float(quantity)
                 
@@ -39,7 +39,7 @@ class KarmaSystem(commands.Cog):
         self.db.clear_inventory(user_id)
         self.db.add_karma_points(user_id, db_karma_payload)
 
-        # Scientific notation check for cosmic numbers freed
+        # Use scientific notation for numbers exceeding standard display range
         freed_display = f"{total_fish_freed:,.0f}" if total_fish_freed < 1e15 else f"{total_fish_freed:.4e}"
 
         embed = discord.Embed(
@@ -50,7 +50,7 @@ class KarmaSystem(commands.Cog):
         
         breakdown = ""
         for tier, points in karma_to_add.items():
-            # Secure display format swap so giant float numbers don't crash the string engine
+            # Use scientific notation for numbers exceeding standard display range
             points_display = f"{points:,.0f}" if points < 1e15 else f"{points:.4e}"
             breakdown += f"• **{tier}**: `+{points_display} Karma` \n"
             

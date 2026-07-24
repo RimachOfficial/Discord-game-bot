@@ -57,7 +57,7 @@ def calculate_sell_impact(tier: str, quantity_sold: float, current_unit_price: f
     normal_price_drop = quantity_sold * (base_price * 0.005)
     normal_new_price = max(hard_floor, current_unit_price - normal_price_drop)
 
-    # 🌟 ANTI-EXPLOIT: Pay them the average value of the NORMAL crash
+    # Anti-exploit: Pay them the average value across the normal crash curve
     average_unit_price = (current_unit_price + normal_new_price) / 2.0
     total_payout = average_unit_price * quantity_sold
 
@@ -97,7 +97,7 @@ def calculate_buy_impact(tier: str, quantity_bought: float, current_unit_price: 
     new_price = min(max_allowed_price, current_unit_price + price_bump)
     actual_bump = new_price - current_unit_price
 
-    # 🌟 ANTI-EXPLOIT: Calculate the average slippage price
+    # Anti-exploit: Calculate the average slippage price
     average_unit_price = (current_unit_price + new_price) / 2.0
     total_cost = average_unit_price * quantity_bought
 
@@ -120,7 +120,7 @@ def calculate_sell_all_impact(user_inv: list[tuple[str, float]], market_prices: 
     total_payout = 0.0
     total_fish_sold = 0.0
 
-    # 🌟 STEP 1: Aggregate all individual fish species into their primary Tiers first
+    # Step 1: Aggregate all individual fish species into their primary tiers
     tier_quantities = {}
     for fish_name, quantity in user_inv:
         quantity = float(quantity)
@@ -132,7 +132,7 @@ def calculate_sell_all_impact(user_inv: list[tuple[str, float]], market_prices: 
     sanitized_drops = {}
     impacted_tiers_text = []
 
-    # 🌟 STEP 2: Calculate the slippage for the entire combined tier at once!
+    # Step 2: Calculate the slippage for the entire combined tier at once
     for tier, total_quantity in tier_quantities.items():
         base_price = float(FISH_DATA[tier]["value"])
         current_price = float(market_prices.get(tier, base_price))

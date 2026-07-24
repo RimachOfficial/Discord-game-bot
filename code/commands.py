@@ -210,7 +210,7 @@ class FishingCommands(commands.Cog):
         self.db.update_player_cash(user_id, result["total_payout"], interaction.user.name)
         self.db.clear_inventory(user_id)
         
-        # 🛡️ FIX NameError / Chart Tracking Logic: Identify exactly which tiers were handled
+        # Fixes NameError / Chart Tracking Logic: Identify exactly which tiers were handled
         sold_tiers = set()
         for fish_name, quantity in user_inv:
             if quantity > 0:

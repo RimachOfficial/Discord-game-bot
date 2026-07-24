@@ -4,7 +4,7 @@ from discord.ext import commands, tasks
 from constants import CREW_CATALOG, FISH_DATA
 from engines import crew_engine
 
-# ⏱️ CONFIGURATION: Minutes between each market paycheck evaluation
+# Configuration: Minutes between each market paycheck evaluation
 MINUTES_OF_UPDATE = 5.0
 
 class CrewRecruitDropdown(discord.ui.Select):
@@ -87,7 +87,7 @@ class CrewCog(commands.Cog):
         self.passive_income_loop.cancel()
 
     # ------------------------------------------------------------------
-    # 📈 THE STOCK-TIED BACKGROUND REVENUE ENGINE
+    # The Stock-Tied Background Revenue Engine
     # ------------------------------------------------------------------
     @tasks.loop(minutes=MINUTES_OF_UPDATE)
     async def passive_income_loop(self):

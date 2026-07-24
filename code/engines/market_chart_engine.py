@@ -19,11 +19,11 @@ def generate_and_save_market_chart(db_manager) -> str:
 
     plt.style.use('dark_background')
     
-    # Grab all available tiers dynamically (No slices, no hardcoding!)
+    # Grab all available tiers dynamically (no slices, no hardcoding)
     tracked_tiers = list(prices.keys())
     total_tiers = len(tracked_tiers)
     
-    # 📐 CALCULATE OPTIMAL GRID DYNAMICALLY
+    # Calculate optimal grid dimensions dynamically
     # We want roughly a 16:9 ratio grid layout depending on the tier count
     if total_tiers <= 3:
         ncols = total_tiers
@@ -35,13 +35,13 @@ def generate_and_save_market_chart(db_manager) -> str:
         ncols = 4 if total_tiers in [4, 8] else 5  # Favor neat 4 or 5 col layouts
         nrows = math.ceil(total_tiers / ncols)
         
-    # Auto-scale the canvas window size so charts always have perfect breathing room
+    # Auto-scale the canvas size to ensure charts have adequate spacing
     fig_width = max(12, ncols * 4)
     fig_height = max(5, nrows * 3.8)
 
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(fig_width, fig_height))
     
-    # If there is only 1 subplot total, wrap it in a list so .flatten() or loop iteration doesn't crash
+    # If there is only 1 subplot, wrap it in a list so .flatten() works correctly
     if total_tiers == 1:
         axes = [axes]
     else:
@@ -59,7 +59,7 @@ def generate_and_save_market_chart(db_manager) -> str:
         
         history = history[::-1]
         
-        # 🧹 Clean text for font safety
+        # Remove non-ASCII characters for font safety
         clean_tier_name = re.sub(r'[^\x00-\x7F]+', '', tier).strip()
 
         if len(history) < 2:
@@ -87,7 +87,7 @@ def generate_and_save_market_chart(db_manager) -> str:
         ax.grid(True, linestyle=":", alpha=0.15)
         ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f"${x:,.0f}" if x < 1e6 else f"${x:.1e}"))
 
-    # 🧹 DYNAMIC CLEANUP: Automatically hides any empty subplot squares left at the end
+    # Remove any empty subplot slots left at the end of the grid
     for jdx in range(len(tracked_tiers), len(axes)):
         fig.delaxes(axes[jdx])
 

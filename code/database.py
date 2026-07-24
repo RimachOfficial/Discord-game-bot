@@ -8,7 +8,7 @@ class DatabaseManager:
         self.cursor = self.conn.cursor()
         self.create_tables()
         self.init_market()
-        #added this if i add new stuff to the tiers to update it for now i will keep it commented(maybe)
+        # Ensures newly added tiers from constants.py are synced to the database
         self.sync_new_market_tiers() 
 
     def sync_new_market_tiers(self):
@@ -179,11 +179,11 @@ class DatabaseManager:
         self.cursor.execute("SELECT tier_name, current_price FROM market")
         raw_data = self.cursor.fetchall()
         
-        # 🌟 Get the perfect order directly from constants.py
+        # Get the tier order directly from constants.py
         perfect_order = list(FISH_DATA.keys())
         
         # Sort the database rows so they match the FISH_DATA order
-        # If a weird tier exists, it gets sent to the back (index 999)
+        # If an unrecognized tier exists, it gets sent to the back (index 999)
         sorted_data = sorted(
             raw_data, 
             key=lambda row: perfect_order.index(row[0]) if row[0] in perfect_order else 999
@@ -254,7 +254,7 @@ class DatabaseManager:
     def get_player_balance(self, user_id: str) -> float:
         self.cursor.execute("SELECT cash FROM players WHERE user_id = ?", (user_id,))
         row = self.cursor.fetchone()
-        # Force the return value to be a float so it can handle cosmic amounts safely
+        # Return as float for precise handling of large numerical values
         return float(row[0]) if (row and row[0] is not None) else 0.0
 
     def get_item_count(self, user_id: str, item_name: str) -> int:

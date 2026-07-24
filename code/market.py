@@ -87,7 +87,7 @@ class MarketCommands(commands.Cog):
 
         print("📊 Executing chart generation routine...")
         try:
-            # ✅ This hands the heavy processing to a background thread so the bot never freezes!
+            # Delegate heavy processing to a background thread so the bot never freezes
             await asyncio.to_thread(engines.market_chart_engine.generate_and_save_market_chart, self.db)
             print("✅ market_trend.png successfully updated on disk via background thread!")
         except Exception as e:
@@ -172,7 +172,7 @@ class MarketCommands(commands.Cog):
         if has_short_squeeze:
             self.db.clear_buff(user_id, "short_squeeze")
         
-        # 🛡️ FIX: Track the actual applied price to prevent phantom chart dips
+        # FIX: Track the actual applied price to prevent phantom chart dips
         price_to_log = current_unit_price
         if not has_tax_evasion:
             self.db.update_market_price(chosen_tier, new_price)

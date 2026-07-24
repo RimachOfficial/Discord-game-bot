@@ -11,7 +11,7 @@ def execute_car_battery(current_karma: list[tuple[str, float]]) -> dict:
     # 2. Sum up the karma using the safe dictionary values
     total_available_karma = sum(float(points) for points in raw_karma.values())
     
-    # 🛑 ANTI-EXPLOIT: Check if they have enough karma
+    # Check if the player has enough karma to use the item
     if total_available_karma < 50.0:
         return {
             "success": False, 

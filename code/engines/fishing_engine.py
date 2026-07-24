@@ -11,11 +11,11 @@ def calculate_dynamic_weights(raw_karma: dict, has_mod_app: bool, has_bf_repelle
         luck_bonus_pct = points / 100.0 
         adjusted_weight = base_weight * (1 + (luck_bonus_pct / 100.0))
         
-        # Apply Passives
+        # Apply passive item effects
         if has_mod_app and tier == "Uncommon 🟢":
-            adjusted_weight *= 2.0  # Doubles Uncommon 🟢 chance as a penalty
+            adjusted_weight *= 2.0  # Doubles Uncommon drop weight as a penalty
         if has_bf_repellent and tier == "Remarkable 🟠":
-            adjusted_weight = 0.0   # Blocks Remarkable 🟠 completely
+            adjusted_weight = 0.0   # Removes Remarkable from the drop pool
             
         dynamic_weights.append(adjusted_weight)
     return dynamic_weights
