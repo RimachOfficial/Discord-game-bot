@@ -28,12 +28,12 @@ Bipbob is a **heavily economy-driven Discord fishing simulator** where nothing i
 
 ## Features
 
-### 🎣 Dynamic Fishing
+### Dynamic Fishing
 - **12 rarity tiers** — from `Common ⚪` to `Legendary 👑`
 - **Karma system** — release fish for permanent luck boosts to rare tiers
 - **Passive item modifiers** — change your drop rates with black market gear
 
-### 🎣 Fish Tiers
+### Fish Tiers
 All 12 rarity tiers, their base values, and the species that inhabit them:
 
 | Tier | Base Value | Notable Species |
@@ -51,13 +51,13 @@ All 12 rarity tiers, their base values, and the species that inhabit them:
 | `Elite 💎` | `$100,000` | Great White Shark (Alfred Dean Record — 2,664 lbs) |
 | `Legendary 👑` | `$1,000,000` | The Legendary Kraken 🦑, Poseidon's Goldfish 🔱 |
 
-### 📈 Live Stock Market
+### Live Stock Market
 - Prices fluctuate **every 5 minutes** with natural drift
 - **Supply & demand** — mass selling crashes prices, mass buying surges them
 - **Breaking News shocks** — random events (Crypto Crash, Whale Act, Shark Week) that instantly manipulate prices
 - **Live price charts** — `/market` shows matplotlib-generated trend charts
 
-### 🏪 Black Market Items
+### Black Market Items
 | Item | Type | Effect |
 |------|------|--------|
 | 🍼 Copium Inhaler | Consumable | 1% chance for Legendary 👑 on next cast |
